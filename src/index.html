@@ -11,6 +11,10 @@
             body {
                 margin: 0; 
                 padding: 0;
+                background: gray;
+            }
+            #container {
+                background: white;
             }
         </style>
 		<script src="jquery-1.9.1.min.js" language="javascript"></script>
@@ -24,14 +28,15 @@
 		<script src="ObjectFactory.js" language="javascript"></script>
 		<script language="javascript">
 		window.onload = function() {
-			var game = new Game('container', 500, 1.66, 1);
+            var aspectRatio = screen.width/screen.height;
+			var game = new Game('container', 500, aspectRatio, 1);
 			game.start();
 			window.game = game;
 		}
 		</script>
 	</head>
 	<body>
-		<div id="container" style="border: 1px solid black;">
+		<div id="container">
 		</div>
 		<!--<a href="javascript:game.start();">Start!</a><a href="javascript:game.stop();">Stop!</a>-->
 	</body>
