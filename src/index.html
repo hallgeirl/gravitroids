@@ -1,0 +1,26 @@
+<html>
+	<head>
+		<title>OMG CANVAS!</title>
+		<script src="jquery-1.9.1.min.js" language="javascript"></script>
+		<script src="kinetic-v4.3.3.min.js" language="javascript"></script>
+		<script src="Game.js" language="javascript"></script>
+		<script src="GameObject.js" language="javascript"></script>
+		<script src="CollisionManager.js" language="javascript"></script>
+		<script src="Objects.js" language="javascript"></script>
+		<script src="Util.js" language="javascript"></script>
+		<script src="Components.js" language="javascript"></script>
+		<script src="ObjectFactory.js" language="javascript"></script>
+		<script language="javascript">
+		window.onload = function() {
+			var game = new Game('container', 1000, 550, 1);
+			game.start();
+			window.game = game;
+		}
+		</script>
+	</head>
+	<body>
+		<div id="container" style="border: 1px solid black; width: 1000px;">
+		</div>
+		<a href="javascript:game.start();">Start!</a><a href="javascript:game.stop();">Stop!</a>
+	</body>
+</html>
