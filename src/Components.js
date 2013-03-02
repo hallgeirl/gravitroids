@@ -9,6 +9,9 @@ function Component() {
 Component.prototype.receiveMessage = function(message) {}
 Component.prototype.update = function(frameTime) {}
 Component.prototype.initialize = function() {}
+Component.prototype.getHandledMessages = function() { 
+    return [];
+}
 
 //spatial component
 function SpatialComponent(config) {
@@ -32,6 +35,10 @@ SpatialComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+SpatialComponent.prototype.getHandledMessages = function() { 
+    return ['accel'];
+}
+
 //gravity component
 function GravityComponent(config) {
 	this.gravity = config.magnitude;
@@ -47,12 +54,11 @@ GravityComponent.prototype.update = function(frameTime) {
 function ShapeComponent(config) {
 	this.sequence = 1000;
 	this.shape = ShapeComponent.createShape(config.shape, config.shapemap, config);
+    this.shape.setListening(false);
     config.layer.add(this.shape);
 	this.rotationOffset = config.rotation;
     if (!this.rotationOffset)
         this.rotationOffset = 0;
-    if (!this.shape)
-        throw 'shape must be set';
 }
 
 ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
@@ -75,6 +81,10 @@ ShapeComponent.prototype.receiveMessage = function(message) {
 		this.shape.setRotation(-message.data-this.rotationOffset);
     else if (message.subject == 'size')
         this.shape.setRadius(message.data);
+}
+
+ShapeComponent.prototype.getHandledMessages = function() { 
+    return ['move', 'kill', 'rotate', 'size'];
 }
 
 function ControllerComponent() {
@@ -149,6 +159,10 @@ AccelleratorComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+AccelleratorComponent.prototype.getHandledMessages = function() { 
+    return ['move', 'control', 'rotate'];
+}
+
 function FrictionComponent(config) {
 	this.magnitude = config.friction;
 	this.sequence = 4;
@@ -161,6 +175,10 @@ FrictionComponent.prototype.receiveMessage = function(message) {
 		this.velocity.x = message.data.x;
 		this.velocity.y = message.data.y;
 	}
+}
+
+FrictionComponent.prototype.getHandledMessages = function() { 
+    return ['speed'];
 }
 
 FrictionComponent.prototype.update = function(frameTime) {
@@ -222,6 +240,10 @@ RotationComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+RotationComponent.prototype.getHandledMessages = function() { 
+    return ['control'];
+}
+
 RotationComponent.prototype.update = function(frameTime) {
 	if (this.angleDiff == 0) 
 		return;
@@ -273,6 +295,10 @@ ExhaustComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+ExhaustComponent.prototype.getHandledMessages = function() { 
+    return ['speed', 'rotate', 'move', 'control'];
+}
+
 function AsteroidSizeComponent(config) {
 	this.position = {x: 0, y:0};
 	this.size = config.size;
@@ -291,7 +317,7 @@ AsteroidSizeComponent.prototype.receiveMessage = function(message) {
 	            var velocity = getDirectionFromAngle(Math.random()*2*Math.PI);
             	velocity = vectorScale(velocity, 200);
 
-				this.owner.game.tell(new Message('spawn', { type: 'asteroid', config: { position: this.position, size: this.size-1, velocity: velocity, points: 100*(this.size-1) }}, this));
+				this.owner.game.receiveMessage(new Message('spawn', { type: 'asteroid', config: { position: this.position, size: this.size-1, velocity: velocity, points: 100*(this.size-1) }}, this));
 			}
 		}
 	} else if (message.subject == 'move') {
@@ -300,6 +326,10 @@ AsteroidSizeComponent.prototype.receiveMessage = function(message) {
 		if (message.data.other.type == 'bullet') 
 			this.health -= 100;
 	}
+}
+
+AsteroidSizeComponent.prototype.getHandledMessages = function() { 
+    return ['kill', 'move', 'collide'];
 }
 
 AsteroidSizeComponent.prototype.update = function(frameTime) {
@@ -322,13 +352,13 @@ ContinuousRotationComponent.prototype.update = function(frameTime) {
 		this.owner.broadcast(new Message('control', 'left', this));	
 }
 
-function GunComponent() {
+function GunComponent(config) {
 	this.position = {x: 0, y:0};
 	this.rotation = 0;
 	this.fire = false;
 	this.cooldown = 0.05;
 	this.cooldownTimer = 0;
-	this.spread = Math.PI/8;
+	this.spread = config.spread;
 }
 
 GunComponent.prototype = new Component();
@@ -342,12 +372,16 @@ GunComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+GunComponent.prototype.getHandledMessages = function() { 
+    return ['move', 'rotate', 'control'];
+}
+
 GunComponent.prototype.update = function(frameTime) {
 	this.cooldownTimer -= frameTime;
 	var finalAngle = this.rotation+this.spread*Math.random()-this.spread/2;
 	
 	if (this.fire && this.cooldownTimer <= 0) {
-		this.owner.game.tell(new Message('spawn', { type: 'bullet', config: { position: this.position, velocity: vectorScale(getDirectionFromAngle(finalAngle),800), initial: finalAngle}}, this));
+		this.owner.game.receiveMessage(new Message('spawn', { type: 'bullet', config: { position: this.position, velocity: vectorScale(getDirectionFromAngle(finalAngle),800), initial: finalAngle}}, this));
 		this.cooldownTimer = this.cooldown;		
 	}
 	
@@ -363,6 +397,10 @@ DestroyOutOfBoundsComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'move') {
 		this.position = message.data;
 	}
+}
+
+DestroyOutOfBoundsComponent.prototype.getHandledMessages = function() { 
+    return ['move'];
 }
 
 DestroyOutOfBoundsComponent.prototype.update = function(frameTime) {
@@ -394,6 +432,10 @@ CollisionComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+CollisionComponent.prototype.getHandledMessages = function() { 
+    return ['shape', 'kill'];
+}
+
 CollisionComponent.prototype.update = function(frameTime) {
 	
 }
@@ -409,6 +451,10 @@ DieOnCollisionComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'collide' && this.owner.type != message.data.other.type && this.owner.type == 'bullet') { 
 		this.owner.broadcast(new Message('kill', null, this));
 	}
+}
+
+DieOnCollisionComponent.prototype.getHandledMessages = function() { 
+    return ['collide'];
 }
 
 function ExplodeOnKillComponent(config) {
@@ -437,6 +483,10 @@ ExplodeOnKillComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+ExplodeOnKillComponent.prototype.getHandledMessages = function() { 
+    return ['kill', 'move'];
+}
+
 function DieOnAsteroidCollisionComponent() {
 }
 
@@ -450,6 +500,9 @@ DieOnAsteroidCollisionComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
+DieOnAsteroidCollisionComponent.prototype.getHandledMessages = function() { 
+    return ['collide'];
+}
 
 function SizeComponent(config) {
     this.size = config.size;
@@ -470,3 +523,6 @@ PointsComponent.prototype.receiveMessage = function(message) {
         this.owner.broadcast(new Message('score', this.points, this));
 }
 
+PointsComponent.prototype.getHandledMessages = function() { 
+    return ['kill'];
+}

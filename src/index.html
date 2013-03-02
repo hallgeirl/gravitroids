@@ -1,6 +1,18 @@
 <html>
 	<head>
 		<title>OMG CANVAS!</title>
+        <style id="container_size">
+            #container {
+                width: 100px; 
+                height:100px;
+            }
+        </style>
+        <style>
+            body {
+                margin: 0; 
+                padding: 0;
+            }
+        </style>
 		<script src="jquery-1.9.1.min.js" language="javascript"></script>
 		<script src="kinetic-v4.3.3.min.js" language="javascript"></script>
 		<script src="Game.js" language="javascript"></script>
@@ -12,15 +24,15 @@
 		<script src="ObjectFactory.js" language="javascript"></script>
 		<script language="javascript">
 		window.onload = function() {
-			var game = new Game('container', 1000, 550, 1);
+			var game = new Game('container', 500, 1.66, 1);
 			game.start();
 			window.game = game;
 		}
 		</script>
 	</head>
 	<body>
-		<div id="container" style="border: 1px solid black; width: 1000px;">
+		<div id="container" style="border: 1px solid black;">
 		</div>
-		<a href="javascript:game.start();">Start!</a><a href="javascript:game.stop();">Stop!</a>
+		<!--<a href="javascript:game.start();">Start!</a><a href="javascript:game.stop();">Stop!</a>-->
 	</body>
 </html>

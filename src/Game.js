@@ -4,18 +4,18 @@ function Message(subject, data, sender) {
 	this.sender = sender;
 }
 
-
-function Game(container, width, height, layers) {
+function Game(container, height, aspectRatio, layers) {
+    this.container = container;
+    this.aspectRatio = aspectRatio;
 	this.frameRate = 60;
 	this.intervalId = null;
 	this.speedMultiplier = 10;
 	this.stage = new Kinetic.Stage({
 		container: container,
-		width: width,
+		width: height*aspectRatio,
 		height: height
 	});
-	$('#' + container).attr('width', width);
-	this.stageWidth = width;
+	this.stageWidth = height*aspectRatio;
 	this.stageHeight = height;
 	this.layers = [];
 
@@ -39,22 +39,51 @@ function Game(container, width, height, layers) {
       this.objectMap['bullet'] = bullet;
       this.objectMap['asteroid'] = asteroid;
       this.objectMap['particle'] = particle;
+      this.scaleSceneToWindow();
+}
+
+Game.prototype.scaleSceneToWindow = function() {
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    width = height * this.aspectRatio;
+    if (width > window.innerWidth)
+    {
+        width = window.innerWidth;
+        height = width / aspectRatio;
+    }
+    this.scaleScene(width, height);
+}
+
+Game.prototype.scaleScene = function(width, height) {
+    this.stage.setScale(height/this.stageHeight);
+    this.stage.setHeight(height);
+    this.stage.setWidth(width);
+	$('#' + this.container).attr('width', width);
+	$('#' + this.container).attr('height', height);
+
+    $('#' + this.container + '_size').text('#' + this.container + ' { width: ' + width + 'px; height: ' + height + 'px; }');
 }
 
 Game.prototype.initialize = function() {
+    var that = this;
+    window.addEventListener('resize', function (e) 
+    { 
+        that.scaleSceneToWindow();
+    });
 	this.objects = [];
 	this.easiness = 5;
 	this.spawnCounter = this.easiness;
 	this.score = 0;
 	this.collisionManager = new CollisionManager();
 	
-	this.objectFactory = new ObjectFactory(this, this.layers[0]);
-	this.spawnObject('ship', { position: {x:this.stageWidth/2, y:this.stageHeight-200} });
+	this.objectFactory = new ObjectFactory(this, this.layers);
+	this.spawnObject('ship', { position: {x:this.stageWidth/2, y:this.stageHeight*0.8} });
 	this.gameTime = 0;
 	this.difficultyTimer = 10;
 }
 
-Game.prototype.tell = function(message) {
+Game.prototype.receiveMessage = function(message) {
 	switch (message.subject) {
         case 'spawn':
             this.spawnObject(message.data.type, message.data.config);

@@ -15,16 +15,27 @@ GameObject.prototype.addComponent = function(component) {
 	this.components.push(component);
 	component.owner = this;
 	this.components.sort(function(comp) { return comp.sequence; });
+
+    var messageSinks = component.getHandledMessages();
+    for (var i = 0; i < messageSinks.length; i++) {
+        if (!this.messageChannels[messageSinks[i]])
+            this.messageChannels[messageSinks[i]] = [];
+        
+        this.messageChannels[messageSinks[i]].push(component);
+    }
 }
 
 GameObject.prototype.broadcast = function(message, sender) {
-	for (var i = 0; i < this.components.length; i++) {
-		this.components[i].receiveMessage(message, sender)
-	}
-	
+    var channel = this.messageChannels[message.subject];
+    if (channel) {
+        for (var i = 0; i < channel.length; i++) {
+            channel[i].receiveMessage(message, sender);
+        }
+    }
+
 	if (message.subject == 'kill' || message.subject == 'score') {
 		this.alive = false;
-        this.game.tell(message);
+        this.game.receiveMessage(message);
 	}
 }
 

@@ -1,5 +1,5 @@
-function ObjectFactory(game, objectLayer) {
-	this.objectLayer = objectLayer;
+function ObjectFactory(game, objectLayers) {
+	this.objectLayers = objectLayers;
 	this.game = game;
     this.componentMap = {}
 
@@ -44,7 +44,7 @@ ObjectFactory.prototype.createComponent = function(template, config) {
     var finalTemplate = ObjectFactory.getFinalComponentConfig(template, config);
     
     finalTemplate['shapemap'] = this.shapeMap;
-    finalTemplate['layer'] = this.objectLayer;
+    finalTemplate['layer'] = this.objectLayers[Math.floor(Math.random()*this.objectLayers.length)];
 
     return new this.componentMap[template.type](finalTemplate);
 }
@@ -99,5 +99,5 @@ ObjectFactory.prototype.createParticle = function(config) {
 
     config.velocity = velocity;
 
-    this.game.tell(new Message('spawn', { type: 'particle', config: config }));
+    this.game.receiveMessage(new Message('spawn', { type: 'particle', config: config }));
 }

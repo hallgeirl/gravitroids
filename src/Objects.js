@@ -40,7 +40,7 @@ var ship =
         },
         {
             type: 'exhaust',
-            pipes: 5
+            pipes: 3
         },
         {
             type: 'rotation',
@@ -48,7 +48,8 @@ var ship =
             speed: 0.05
         },
         {
-            type: 'gun'
+            type: 'gun',
+            spread: 0.1
         },
         {
             type: 'collision'
