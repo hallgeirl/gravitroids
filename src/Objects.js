@@ -49,7 +49,8 @@ var ship =
         },
         {
             type: 'gun',
-            spread: 0.1
+            spread: 0.5,
+            barrels: 1
         },
         {
             type: 'collision'
@@ -78,10 +79,10 @@ var bullet =
             shape: 
             {
                 type: 'wedge',
-                sides: 3, radius: 5,
-                fill: 'red',
-                stroke: 'black',
-                strokeWidth: 2,
+                sides: 3, radius: 7,
+                fill: 'black',
+                stroke: 'none',
+                strokeWidth: 0,
                 angleDeg: 45
             },
             rotation: 3.55

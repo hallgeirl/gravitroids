@@ -45,8 +45,10 @@ ObjectFactory.prototype.createComponent = function(template, config) {
     
     finalTemplate['shapemap'] = this.shapeMap;
     finalTemplate['layer'] = this.objectLayers[Math.floor(Math.random()*this.objectLayers.length)];
+    var component = new this.componentMap[template.type](finalTemplate);
+    component.type = template.type;
 
-    return new this.componentMap[template.type](finalTemplate);
+    return component;
 }
 
 ObjectFactory.getFinalComponentConfig = function (template, config) {

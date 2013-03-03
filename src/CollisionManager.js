@@ -16,14 +16,21 @@ CollisionManager.prototype.unregister = function(obj) {
 }
 
 CollisionManager.prototype.checkCollisions = function() {
+    this.sortObjects();
 	for (var i = 0; i < this.collidables.length; i++) {
 		var obj1 = this.collidables[i].object;
 		if (!obj1.shape)
 			continue;
+
+        var bottom1 = obj1.shape.getPosition().y + obj1.shape.getRadius();
+
 		for (var j = i+1; j < this.collidables.length; j++) {
 			var obj2 = this.collidables[j].object;
 			if (!obj2.shape)
 				continue;
+            var top2 = obj2.shape.getPosition().y - obj2.shape.getRadius();
+            if (bottom1 < top2)
+                break;
 			var radius = obj1.shape.getRadius()+obj2.shape.getRadius();
 			var pos1 = obj1.shape.getPosition();
 			var pos2 = obj2.shape.getPosition();
@@ -35,3 +42,36 @@ CollisionManager.prototype.checkCollisions = function() {
 	}
 }
 
+function objectCompare(obj1, obj2) {
+    var top1 = obj1.object.shape.getPosition().y - obj1.object.shape.getRadius();
+    var top2 = obj2.object.shape.getPosition().y - obj2.object.shape.getRadius();
+    return top2-top1;
+}
+
+CollisionManager.prototype.sortObjects = function(frameTime)
+{
+    for (var i = 1; i < this.collidables.length; i++)
+    {
+        var obj1 = this.collidables[i];
+        var top1 = obj1.object.shape.getPosition().y - obj1.object.shape.getRadius();
+        var j = i - 1;
+        var done = false;
+
+        do
+        {
+            var obj2 = this.collidables[j];
+            var top2 = obj2.object.shape.getPosition().y - obj2.object.shape.getRadius();
+            if (top1 < top2)
+            {
+                this.collidables[j+1] = this.collidables[j];
+                j--;
+                if (j < 0)
+                    done = true;
+            }
+            else 
+                done = true;
+        } while (!done);
+
+        this.collidables[j+1] = obj1;
+    }
+}

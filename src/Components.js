@@ -54,7 +54,6 @@ GravityComponent.prototype.update = function(frameTime) {
 function ShapeComponent(config) {
 	this.sequence = 1000;
 	this.shape = ShapeComponent.createShape(config.shape, config.shapemap, config);
-    this.shape.setListening(false);
     config.layer.add(this.shape);
 	this.rotationOffset = config.rotation;
     if (!this.rotationOffset)
@@ -64,7 +63,10 @@ function ShapeComponent(config) {
 ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
     if (config.position)
         shapeConfig.position = config.position;
-    return new shapeMap[shapeConfig.type](shapeConfig);
+    var shape = new shapeMap[shapeConfig.type](shapeConfig);
+    shape.setListening(false);
+
+    return shape;
 }
 
 ShapeComponent.prototype = new Component();
@@ -353,6 +355,7 @@ ContinuousRotationComponent.prototype.update = function(frameTime) {
 }
 
 function GunComponent(config) {
+    this.barrels = config.barrels;
 	this.position = {x: 0, y:0};
 	this.rotation = 0;
 	this.fire = false;
@@ -378,10 +381,12 @@ GunComponent.prototype.getHandledMessages = function() {
 
 GunComponent.prototype.update = function(frameTime) {
 	this.cooldownTimer -= frameTime;
-	var finalAngle = this.rotation+this.spread*Math.random()-this.spread/2;
 	
 	if (this.fire && this.cooldownTimer <= 0) {
-		this.owner.game.receiveMessage(new Message('spawn', { type: 'bullet', config: { position: this.position, velocity: vectorScale(getDirectionFromAngle(finalAngle),800), initial: finalAngle}}, this));
+        for (var i = 0; i < this.barrels; i++) {
+	        var finalAngle = this.rotation+this.spread*Math.random()-this.spread/2;
+            this.owner.game.receiveMessage(new Message('spawn', { type: 'bullet', config: { position: this.position, velocity: vectorScale(getDirectionFromAngle(finalAngle),800), initial: finalAngle}}, this));
+        }
 		this.cooldownTimer = this.cooldown;		
 	}
 	
@@ -418,7 +423,6 @@ function CollisionComponent() {
 
 CollisionComponent.prototype = new Component();
 CollisionComponent.prototype.initialize = function() {
-	this.owner.game.collisionManager.register({shape: this.shape, object: this.owner});
 }
 
 CollisionComponent.prototype.receiveMessage = function(message) {
@@ -427,7 +431,6 @@ CollisionComponent.prototype.receiveMessage = function(message) {
 		this.owner.game.collisionManager.unregister(this.owner);
 		this.owner.game.collisionManager.register({shape: this.shape, object: this.owner});
 	} else if (message.subject == 'kill') {
-		
 		this.owner.game.collisionManager.unregister(this.owner);
 	}
 }

@@ -9,12 +9,14 @@ function GameObject(game) {
 	objectCounter++;
 
     this.messageChannels = {};
+    this.componentMap = {};
 }
 
 GameObject.prototype.addComponent = function(component) {
 	this.components.push(component);
 	component.owner = this;
-	this.components.sort(function(comp) { return comp.sequence; });
+    this.componentMap[component.type] = component;
+	//this.components.sort(function(comp) { return comp.sequence; });
 
     var messageSinks = component.getHandledMessages();
     for (var i = 0; i < messageSinks.length; i++) {
@@ -23,6 +25,10 @@ GameObject.prototype.addComponent = function(component) {
         
         this.messageChannels[messageSinks[i]].push(component);
     }
+}
+
+GameObject.prototype.getComponent = function(name) {
+    return this.componentMap[name];
 }
 
 GameObject.prototype.broadcast = function(message, sender) {
