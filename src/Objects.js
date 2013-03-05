@@ -34,10 +34,10 @@ var ship =
             type: 'accellerator',
             magnitude: 200
         },
-        {
-            type: 'gravity',
-            magnitude: -98.8
-        },
+        //{
+        //    type: 'gravity',
+        //    magnitude: -98.8
+        //},
         {
             type: 'exhaust',
             pipes: 3
@@ -49,7 +49,7 @@ var ship =
         },
         {
             type: 'gun',
-            spread: 0.5,
+            spread: 0.1,
             barrels: 1
         },
         {

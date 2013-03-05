@@ -71,6 +71,14 @@ Game.prototype.initialize = function() {
     { 
         that.scaleSceneToWindow();
     });
+    window.addEventListener('mousemove', function (e) {
+        var scale = that.stage.getScale().y;
+        that.broadcast(new Message('mousemove', { x: e.offsetX/scale, y: e.offsetY/scale }), this);
+    });
+    window.addEventListener('touchmove', function (e) {
+        var scale = that.stage.getScale().y;
+        that.broadcast(new Message('mousemove', { x: e.offsetX/scale, y: e.offsetY/scale }), this);
+    });
 	this.objects = [];
 	this.easiness = 5;
 	this.spawnCounter = this.easiness;
@@ -83,7 +91,14 @@ Game.prototype.initialize = function() {
 	this.difficultyTimer = 10;
 }
 
-Game.prototype.receiveMessage = function(message) {
+Game.prototype.broadcast = function(message, sender) {
+    for (var i = 0; i < this.objects.length; i++) {
+        this.objects[i].broadcast(message, sender);
+    }
+    this.receiveMessage(message, sender);
+}
+
+Game.prototype.receiveMessage = function(message, sender) {
 	switch (message.subject) {
         case 'spawn':
             this.spawnObject(message.data.type, message.data.config);

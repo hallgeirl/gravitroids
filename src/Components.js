@@ -60,11 +60,16 @@ function ShapeComponent(config) {
         this.rotationOffset = 0;
 }
 
+ShapeComponent.shapeCache = {};
 ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
+    //if (ShapeComponent.shapeCache[shapeConfig])
+    //    return ShapeComponent.shapeCache[shapeConfig];
     if (config.position)
         shapeConfig.position = config.position;
     var shape = new shapeMap[shapeConfig.type](shapeConfig);
     shape.setListening(false);
+    shape.toImage({ width: shapeConfig.radius, height: shapeConfig.radius, 
+                   callback: function(img) { ShapeComponent.shapeCache[shapeConfig] = new Kinetic.Image({image: img }); }});
 
     return shape;
 }
@@ -90,12 +95,8 @@ ShapeComponent.prototype.getHandledMessages = function() {
 }
 
 function ControllerComponent() {
-	this.up = false;
-	this.down = false;
-	this.left = false;
-	this.right = false;
-	this.ctrl = false;
 	this.pressed = {};
+    this.mouse = { left: false, position: {x:0, y:0}};
 	var that = this;
 	window.addEventListener('keydown', function(evt) { 
 		that.pressed[evt.keyCode] = true;
@@ -103,26 +104,51 @@ function ControllerComponent() {
 	window.addEventListener('keyup', function(evt) { 
 		that.pressed[evt.keyCode] = false;
 	});
+    window.addEventListener('mousedown', function (evt) {
+        that.mouse.left = true;
+     //   that.mouse.position = {x: evt.offsetX, y: evt.offsetY}; 
+    });
+    window.addEventListener('mouseup', function (evt) {
+        that.mouse.left = false;
+    });
+    window.addEventListener('touchstart', function(evt) {
+        that.mouse.left = true;
+    });
+    window.addEventListener('touchend', function(evt) {
+        that.mouse.left = false;
+    });
 	this.sequence = 0;
 }
 
 ControllerComponent.prototype = new Component();
 ControllerComponent.prototype.update = function(frameTime) {
+    if (this.mouse.left){
+        this.owner.broadcast(new Message('control', { button: 'mouseleft', position: this.mouse.position }));
+    }
 	if (this.pressed[38]) {
-		this.owner.broadcast(new Message('control', 'up', this));
+		this.owner.broadcast(new Message('control', { button: 'up' }, this));
 	}
 	if (this.pressed[40]) {
-		this.owner.broadcast(new Message('control', 'down', this));
+		this.owner.broadcast(new Message('control', { button: 'down' }, this));
 	}
 	if (this.pressed[37]) {
-		this.owner.broadcast(new Message('control', 'left', this));
+		this.owner.broadcast(new Message('control', { button: 'left' }, this));
 	}
 	if (this.pressed[39]) {
-		this.owner.broadcast(new Message('control', 'right', this));
+		this.owner.broadcast(new Message('control', { button: 'right' }, this));
 	}
 	if (this.pressed[17]) {
-		this.owner.broadcast(new Message('control', 'ctrl', this));
+		this.owner.broadcast(new Message('control', { button: 'ctrl' }, this));
 	}
+}
+ControllerComponent.prototype.receiveMessage = function(message) {
+    if (message.subject == 'mousemove') {
+        this.mouse.position = message.data;
+    }
+}
+
+ControllerComponent.prototype.getHandledMessages = function() { 
+    return ['mousemove'];
 }
 
 
@@ -144,7 +170,7 @@ AccelleratorComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'control') {
 		var dirX = Math.cos(this.rotation);
 		var dirY = -Math.sin(this.rotation);
-		switch (message.data) {
+		switch (message.data.button) {
 			case 'down':
 				dirY = -dirY;
 				dirX = -dirX;
@@ -220,6 +246,7 @@ function RotationComponent(config) {
 	this.angle = config.initial;
 	this.angleDiff = 0;
 	this.rotationSpeed = config.speed;
+    this.position = {x:0, y:0};
 }
 
 RotationComponent.prototype = new Component();
@@ -231,19 +258,26 @@ RotationComponent.prototype.receiveMessage = function(message) {
 	
 	if (message.subject == 'control') {
 	
-		switch (message.data) {
+		switch (message.data.button) {
 			case 'left':
 				this.angleDiff = this.rotationSpeed;
 				break;
 			case 'right':
 				this.angleDiff = -this.rotationSpeed;
 				break;
+            case 'mouseleft':
+                var direction = vectorNormalize(vectorDifference(message.data.position, this.position));
+                var angle = getAngleFromDirection(direction);
+                this.angleDiff = angle - this.angle;
+                break;
 		}
-	}
+	} else if (message.subject == 'move') {
+        this.position = message.data;
+    }
 }
 
 RotationComponent.prototype.getHandledMessages = function() { 
-    return ['control'];
+    return ['control', 'move'];
 }
 
 RotationComponent.prototype.update = function(frameTime) {
@@ -279,7 +313,7 @@ ExhaustComponent.prototype.receiveMessage = function(message) {
 	} else if (message.subject == 'move') {
 		this.position = message.data;
 	} else if (message.subject == 'control') {
-		switch (message.data) {
+		switch (message.data.button) {
 			case 'up':
 				var direction = vectorInvert(vectorNormalize(this.velocity));
 				var exhaustDirection = getDirectionFromAngle(this.rotation);
@@ -349,9 +383,9 @@ function ContinuousRotationComponent(config) {
 ContinuousRotationComponent.prototype = new Component();
 ContinuousRotationComponent.prototype.update = function(frameTime) {
 	if (this.direction > 0)
-		this.owner.broadcast(new Message('control', 'right', this));	
+		this.owner.broadcast(new Message('control', { button: 'right' }, this));	
 	else
-		this.owner.broadcast(new Message('control', 'left', this));	
+		this.owner.broadcast(new Message('control', { button: 'left' }, this));	
 }
 
 function GunComponent(config) {
@@ -370,7 +404,7 @@ GunComponent.prototype.receiveMessage = function(message) {
 		this.position = message.data;
 	} else if (message.subject == 'rotate') {
 		this.rotation = message.data;
-	} else if (message.subject == 'control' && message.data == 'ctrl') {
+	} else if (message.subject == 'control' && (message.data.button == 'ctrl' || message.data.button == 'mouseleft')) {
 		this.fire = true;
 	}
 }
