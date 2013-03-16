@@ -56,6 +56,11 @@ ObjectFactory.getFinalComponentConfig = function (template, config) {
     for (var prop in config) {
         finalObject[prop] = clone(config[prop]);
     }
+    for (var prop in finalObject) {
+        if (typeof(finalObject[prop]) == 'string' && finalObject[prop][0] == '$')
+            eval('finalObject[prop] = ' + finalObject[prop].substring(1));
+    }
+
     return finalObject;
 }
 

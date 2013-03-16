@@ -116,7 +116,6 @@ var bullet =
 
 var asteroid = 
 {
-
     type: 'asteroid', 
     components: [
         {
@@ -142,7 +141,7 @@ var asteroid =
         {
             type: 'rotation',
             initial: Math.PI/2.0,
-            speed: 0.1
+            speed: '$Math.random()*0.05'
         },
         {
             type: 'asteroidsize',
@@ -150,7 +149,7 @@ var asteroid =
         },
         {
             type: 'continuousrotation',
-            direction: Math.random()-0.5
+            direction: '$Math.random()-0.5'
         },
         {
             type: 'collision'
