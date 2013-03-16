@@ -78,14 +78,13 @@ var bullet =
             type: 'shape',
             shape: 
             {
-                type: 'wedge',
-                sides: 3, radius: 7,
+                type: 'regularpolygon',
+                sides: 3, radius: 4,
                 fill: 'black',
                 stroke: 'none',
-                strokeWidth: 0,
-                angleDeg: 45
+                strokeWidth: 0
             },
-            rotation: 3.55
+            rotation: -Math.PI/2
         },
         {
             type: 'spatial',

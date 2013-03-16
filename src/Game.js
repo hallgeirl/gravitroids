@@ -7,7 +7,7 @@ function Message(subject, data, sender) {
 function Game(container, height, aspectRatio, layers) {
     this.container = container;
     this.aspectRatio = aspectRatio;
-	this.frameRate = 60;
+	this.frameRate = 50;
 	this.intervalId = null;
 	this.speedMultiplier = 10;
 	this.stage = new Kinetic.Stage({
@@ -65,6 +65,12 @@ Game.prototype.scaleScene = function(width, height) {
     $('#' + this.container + '_size').text('#' + this.container + ' { width: ' + width + 'px; height: ' + height + 'px; }');
 }
 
+function touchMove(that, e) {
+    var scale = that.stage.getScale().y;
+    that.broadcast(new Message('mousemove', { x: e.targetTouches[0].pageX/scale, y: e.targetTouches[0].pageY/scale }), this);
+}
+
+
 Game.prototype.initialize = function() {
     var that = this;
     window.addEventListener('resize', function (e) 
@@ -76,15 +82,24 @@ Game.prototype.initialize = function() {
         that.broadcast(new Message('mousemove', { x: e.offsetX/scale, y: e.offsetY/scale }), this);
     });
     window.addEventListener('touchmove', function (e) {
-        var scale = that.stage.getScale().y;
-        that.broadcast(new Message('mousemove', { x: e.offsetX/scale, y: e.offsetY/scale }), this);
+        touchMove(that, e);
     });
+    window.addEventListener('touchstart', function (e) {
+        touchMove(that, e);
+    });
+    window.addEventListener('contextmenu', function (evt) { 
+        if (evt.button == 2){
+            evt.preventDefault();
+        }
+        return false;
+    }, false);
+
 	this.objects = [];
 	this.easiness = 5;
 	this.spawnCounter = this.easiness;
 	this.score = 0;
 	this.collisionManager = new CollisionManager();
-	
+	this.timer = 0;
 	this.objectFactory = new ObjectFactory(this, this.layers);
 	this.spawnObject('ship', { position: {x:this.stageWidth/2, y:this.stageHeight*0.8} });
 	this.gameTime = 0;
@@ -152,7 +167,14 @@ Game.prototype.gameOver = function() {
 Game.prototype.update = function() {
     try 
     {
-        var frametime = 1.0 / this.frameRate;
+        var frametime = 1.0/this.frameRate;
+        //if (this.timer > 0)
+        //    frametime = (new Date().getTime() - this.timer) / 1000;
+        //frametime = Math.max(frametime, 1.0/this.frameRate);
+        //this.timer = new Date().getTime();
+        
+        //var frametime = 1.0 / this.frameRate;
+        //this.lastFrameTime = new Date().getTime() - timer;
         for (var i = this.objects.length-1; i >= 0; i--) {
             this.objects[i].update(frametime);
         }
@@ -185,6 +207,9 @@ Game.prototype.update = function() {
             this.easiness *= 0.9;
             this.difficultyTimer = 10;
         }
+        var that = this;
+ //       console.log(new Date().getTime() - this.timer);
+       // requestAnimationFrame(function() { that.update() }); 
     }
     catch (ex)
     {
@@ -198,6 +223,7 @@ Game.prototype.start = function() {
 	if (this.intervalId != null)
 		return;
 	this.initialize();
+    //requestAnimationFrame(function() { that.update() });
 	this.intervalId = setInterval(function() { that.update() }, 1000 / this.frameRate);
 }
 

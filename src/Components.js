@@ -6,7 +6,7 @@ function Component() {
 	this.sequence = 0;
 }
 
-Component.prototype.receiveMessage = function(message) {}
+Component.prototype.receiveMessage = function(message, sender) {}
 Component.prototype.update = function(frameTime) {}
 Component.prototype.initialize = function() {}
 Component.prototype.getHandledMessages = function() { 
@@ -62,8 +62,6 @@ function ShapeComponent(config) {
 
 ShapeComponent.shapeCache = {};
 ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
-    //if (ShapeComponent.shapeCache[shapeConfig])
-    //    return ShapeComponent.shapeCache[shapeConfig];
     if (config.position)
         shapeConfig.position = config.position;
     var shape = new shapeMap[shapeConfig.type](shapeConfig);
@@ -96,7 +94,7 @@ ShapeComponent.prototype.getHandledMessages = function() {
 
 function ControllerComponent() {
 	this.pressed = {};
-    this.mouse = { left: false, position: {x:0, y:0}};
+    this.mouse = { left: false, right: false, position: {x:0, y:0}};
 	var that = this;
 	window.addEventListener('keydown', function(evt) { 
 		that.pressed[evt.keyCode] = true;
@@ -105,11 +103,16 @@ function ControllerComponent() {
 		that.pressed[evt.keyCode] = false;
 	});
     window.addEventListener('mousedown', function (evt) {
-        that.mouse.left = true;
-     //   that.mouse.position = {x: evt.offsetX, y: evt.offsetY}; 
+        if (evt.button == 0)
+            that.mouse.left = true;
+        else if (evt.button == 2)
+            that.mouse.right = true;
     });
     window.addEventListener('mouseup', function (evt) {
-        that.mouse.left = false;
+        if (evt.button == 0)
+            that.mouse.left = false;
+        else if (evt.button == 2)
+            that.mouse.right = false;
     });
     window.addEventListener('touchstart', function(evt) {
         that.mouse.left = true;
@@ -124,6 +127,9 @@ ControllerComponent.prototype = new Component();
 ControllerComponent.prototype.update = function(frameTime) {
     if (this.mouse.left){
         this.owner.broadcast(new Message('control', { button: 'mouseleft', position: this.mouse.position }));
+    }
+    if (this.mouse.right){
+        this.owner.broadcast(new Message('control', { button: 'mouseright', position: this.mouse.position }));
     }
 	if (this.pressed[38]) {
 		this.owner.broadcast(new Message('control', { button: 'up' }, this));
@@ -162,18 +168,22 @@ function AccelleratorComponent(config) {
 
 AccelleratorComponent.prototype = new Component();
 AccelleratorComponent.prototype.update = function(frameTime) {
-	this.owner.broadcast(new Message('accel', {x: this.accel.x*frameTime, y:this.accel.y*frameTime}, this))
+    if (this.accel.x == 0 && this.accel.y == 0)
+        return;
+
+	this.owner.broadcast(new Message('accel', {x: this.accel.x*frameTime, y:this.accel.y*frameTime, trigger:'control'}, this))
 	this.accel.x = this.accel.y = 0;
 }
 
 AccelleratorComponent.prototype.receiveMessage = function(message) {
-	if (message.subject == 'control') {
+    if (message.subject == 'control') {
 		var dirX = Math.cos(this.rotation);
 		var dirY = -Math.sin(this.rotation);
 		switch (message.data.button) {
 			case 'down':
 				dirY = -dirY;
 				dirX = -dirX;
+            case 'mouseright':
 			case 'up':
 				this.accel.x = dirX*this.magnitude;
 				this.accel.y = dirY*this.magnitude;
@@ -265,6 +275,7 @@ RotationComponent.prototype.receiveMessage = function(message) {
 			case 'right':
 				this.angleDiff = -this.rotationSpeed;
 				break;
+            case 'mouseright':
             case 'mouseleft':
                 var direction = vectorNormalize(vectorDifference(message.data.position, this.position));
                 var angle = getAngleFromDirection(direction);
@@ -312,27 +323,23 @@ ExhaustComponent.prototype.receiveMessage = function(message) {
 		this.rotation = message.data;
 	} else if (message.subject == 'move') {
 		this.position = message.data;
-	} else if (message.subject == 'control') {
-		switch (message.data.button) {
-			case 'up':
-				var direction = vectorInvert(vectorNormalize(this.velocity));
-				var exhaustDirection = getDirectionFromAngle(this.rotation);
-				var position = {x:this.position.x-exhaustDirection.x*10, y:this.position.y-exhaustDirection.y*10};
-				for (var i = 0; i < this.nparticles; i++){
-					this.owner.game.objectFactory.createParticle({ position: position, 
-                                                                   angle: this.rotation-Math.PI, 
-                                                                   speed: vectorLength(this.velocity)+100, 
-                                                                   size: Math.random()*5, 
-                                                                   lifetime: 0.2, 
-                                                                   randomizeAngle: Math.PI/2});
-                }
-				break;
-		}
-	}
+	} else if (message.subject == 'accel' && message.data.trigger == 'control') {
+        var direction = vectorInvert(vectorNormalize(this.velocity));
+        var exhaustDirection = getDirectionFromAngle(this.rotation);
+        var position = {x:this.position.x-exhaustDirection.x*10, y:this.position.y-exhaustDirection.y*10};
+        for (var i = 0; i < this.nparticles; i++){
+            this.owner.game.objectFactory.createParticle({ position: position, 
+                    angle: this.rotation-Math.PI, 
+                    speed: vectorLength(this.velocity)+100, 
+                    size: Math.random()*5, 
+                    lifetime: 0.2, 
+                    randomizeAngle: Math.PI/2});
+        }
+    }
 }
 
 ExhaustComponent.prototype.getHandledMessages = function() { 
-    return ['speed', 'rotate', 'move', 'control'];
+    return ['speed', 'rotate', 'move', 'accel'];
 }
 
 function AsteroidSizeComponent(config) {

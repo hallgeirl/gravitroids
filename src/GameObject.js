@@ -33,7 +33,6 @@ GameObject.prototype.getComponent = function(name) {
 
 GameObject.prototype.broadcast = function(message, sender) {
     var channel = this.messageChannels[message.subject];
-//        console.log(message);
     if (channel) {
         for (var i = 0; i < channel.length; i++) {
             channel[i].receiveMessage(message, sender);
