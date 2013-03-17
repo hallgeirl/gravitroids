@@ -3,7 +3,6 @@ Components
 */
 function Component() {
 	this.owner = null;
-	this.sequence = 0;
 }
 
 Component.prototype.receiveMessage = function(message, sender) {}
@@ -17,7 +16,6 @@ Component.prototype.getHandledMessages = function() {
 function SpatialComponent(config) {
 	this.position = config.position;
 	this.velocity = config.velocity;
-	this.sequence = 50
 }
 SpatialComponent.prototype = new Component();
 SpatialComponent.prototype.update = function(frameTime) {
@@ -42,7 +40,6 @@ SpatialComponent.prototype.getHandledMessages = function() {
 //gravity component
 function GravityComponent(config) {
 	this.gravity = config.magnitude;
-	this.sequence = 0;
 }
 
 GravityComponent.prototype = new Component();
@@ -52,7 +49,6 @@ GravityComponent.prototype.update = function(frameTime) {
 
 //Renderer component
 function ShapeComponent(config) {
-	this.sequence = 1000;
 	this.shape = ShapeComponent.createShape(config.shape, config.shapemap, config);
     config.layer.add(this.shape);
 	this.rotationOffset = config.rotation;
@@ -60,14 +56,11 @@ function ShapeComponent(config) {
         this.rotationOffset = 0;
 }
 
-ShapeComponent.shapeCache = {};
 ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
     if (config.position)
         shapeConfig.position = config.position;
     var shape = new shapeMap[shapeConfig.type](shapeConfig);
     shape.setListening(false);
-    shape.toImage({ width: shapeConfig.radius, height: shapeConfig.radius, 
-                   callback: function(img) { ShapeComponent.shapeCache[shapeConfig] = new Kinetic.Image({image: img }); }});
 
     return shape;
 }
@@ -120,7 +113,6 @@ function ControllerComponent() {
     window.addEventListener('touchend', function(evt) {
         that.mouse.left = false;
     });
-	this.sequence = 0;
 }
 
 ControllerComponent.prototype = new Component();
@@ -162,7 +154,6 @@ function AccelleratorComponent(config) {
 	this.accel = {x: 0, y:0};
 	this.position = {x:0, y:0};
 	this.magnitude = config.magnitude;
-	this.sequence = 5
 	this.rotation = 0;
 }
 
@@ -203,7 +194,6 @@ AccelleratorComponent.prototype.getHandledMessages = function() {
 
 function FrictionComponent(config) {
 	this.magnitude = config.friction;
-	this.sequence = 4;
 	this.velocity = {x:0, y:0};
 }
 
@@ -241,7 +231,6 @@ FrictionComponent.prototype.update = function(frameTime) {
 
 function LifetimeComponent(config) {
 	this.lifetime = config.lifetime;
-	this.sequence = 4;	
 }
 
 LifetimeComponent.prototype = new Component();
