@@ -1,23 +1,15 @@
 function Stage(game, layers, stageWidth, stageHeight) {
 	this.collisionManager = new CollisionManager();
     this.layers = layers;
-	this.objectFactory = new ObjectFactory(this, this.layers);
-
+	this.objectFactory = new ObjectFactory(game, this, this.layers);
+    this.game = game;
     this.objectMap = {};
     this.objectMap['ship'] = ship;
     this.objectMap['bullet'] = bullet;
     this.objectMap['asteroid'] = asteroid;
     this.objectMap['particle'] = particle;
 
-	this.scoreText = new Kinetic.Text({ 
-		x: 10,
-        y: 10,
-        text: 'Score: 0',
-        fontSize: 30,
-        fontFamily: 'Calibri',
-        fill: 'black'
-    });
-    this.layers[0].add(this.scoreText);
+
     this.stageWidth = stageWidth;
     this.stageHeight = stageHeight;
 
@@ -32,6 +24,16 @@ Stage.prototype.initialize = function() {
 	this.difficultyTimer = 10;
 	this.spawnCounter = this.easiness;
 	this.spawnObject('ship', { position: {x:this.stageWidth/2, y:this.stageHeight*0.8} });
+    this.texts = [];
+	this.scoreText = { 
+		x: 20,
+        y: 25,
+        text: 'Score: 0',
+        fontSize: 30,
+        fontFamily: 'Calibri',
+        fill: 'black'
+    };
+    this.texts.push(this.scoreText);
 }
 
 Stage.prototype.destroy = function() {
@@ -75,6 +77,10 @@ Stage.prototype.update = function(frametime) {
         this.easiness *= 0.9;
         this.difficultyTimer = 10;
     }
+
+    for (var i = 0; i < this.texts.length; i++) {
+        this.game.renderer.renderText(this.texts[i]);
+    }
 }
 
 Stage.prototype.broadcast = function(message, sender) {
@@ -91,11 +97,11 @@ Stage.prototype.receiveMessage = function(message, sender) {
             break;   
 		case 'score':
 			this.score += message.data;
-			this.scoreText.setText('Score: ' + this.score);
+			this.scoreText.text = 'Score: ' + this.score;
             break;
         case 'kill':
 			if (message.sender.owner && message.sender.owner.type == 'ship') {
-				this.gameOver()
+				this.gameOver();
 			}
 			break;
 	}
@@ -108,30 +114,26 @@ Stage.prototype.spawnObject = function(type, config) {
 }
 
 Stage.prototype.gameOver = function() {
-	var gameOverText = new Kinetic.Text({
+	var gameOverText = {
 		x: this.stageWidth/2,
         y: this.stageHeight/2-50,
         text: 'Game over!',
         fontSize: 70,
         fontFamily: 'Calibri',
         fill: 'black',
-    });
-	var gameOverText2 = new Kinetic.Text({
+        align: 'center'
+    };
+	var gameOverText2 = {
 		x: this.stageWidth/2,
         y: this.stageHeight/2+50,
         text: 'Game restarts in 5 seconds.',
         fontSize: 20,
         fontFamily: 'Calibri',
         fill: 'black',
-    });
-	gameOverText.setOffset({
-        x: gameOverText.getWidth() / 2
-    });
-	gameOverText2.setOffset({
-        x: gameOverText2.getWidth() / 2
-    });
-	this.layers[0].add(gameOverText);
-	this.layers[0].add(gameOverText2);
+        align: 'center'
+    };
+	this.texts.push(gameOverText);
+	this.texts.push(gameOverText2);
     var that = this;
-	setTimeout(function() {that.restart(); gameOverText.remove(); gameOverText2.remove()}, 5000);
+	setTimeout(function() {that.restart();}, 5000);
 }

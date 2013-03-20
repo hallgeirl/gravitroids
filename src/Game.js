@@ -1,3 +1,7 @@
+if (!window.requestAnimationFrame) {
+    window.requestAnimationFrame = setTimeout;
+}
+
 function Message(subject, data, sender) {
 	this.subject = subject;
 	this.data = data;
@@ -5,25 +9,15 @@ function Message(subject, data, sender) {
 }
 
 function Game(container, height, aspectRatio, layers) {
+    this.renderer = new Renderer(container, height, aspectRatio);
     this.container = container;
     this.aspectRatio = aspectRatio;
 	this.frameRate = 50;
 	this.intervalId = null;
 	this.speedMultiplier = 10;
-	this.stage = new Kinetic.Stage({
-		container: container,
-		width: height*aspectRatio,
-		height: height
-	});
 	this.stageWidth = height*aspectRatio;
 	this.stageHeight = height;
 	this.layers = [];
-
-	for (var i = 0; i < layers; i++) {
-		this.layers.push(new Kinetic.Layer());
-		this.stage.add(this.layers[i]);
-	}
-	
 
     this.scaleSceneToWindow();
     this.attachEventListeners();
@@ -44,9 +38,8 @@ Game.prototype.scaleSceneToWindow = function() {
 }
 
 Game.prototype.scaleScene = function(width, height) {
-    this.stage.setScale(height/this.stageHeight);
-    this.stage.setHeight(height);
-    this.stage.setWidth(width);
+    this.renderer.setScale(height/this.stageHeight);
+    this.renderer.resizeCanvas(width, height);
 	$('#' + this.container).attr('width', width);
 	$('#' + this.container).attr('height', height);
 
@@ -54,7 +47,7 @@ Game.prototype.scaleScene = function(width, height) {
 }
 
 function touchMove(that, e) {
-    var scale = that.stage.getScale().y;
+    var scale = that.renderer.getScale();
     that.broadcast(new Message('mousemove', { x: e.targetTouches[0].pageX/scale, y: e.targetTouches[0].pageY/scale }), this);
 }
 
@@ -65,8 +58,10 @@ Game.prototype.attachEventListeners = function() {
         that.scaleSceneToWindow();
     });
     window.addEventListener('mousemove', function (e) {
-        var scale = that.stage.getScale().y;
-        that.broadcast(new Message('mousemove', { x: e.offsetX/scale, y: e.offsetY/scale }), this);
+        var scale = that.renderer.getScale();
+        var offsetX = e.offsetX==undefined?e.layerX:e.offsetX;
+        var offsetY = e.offsetY==undefined?e.layerY:e.offsetY;
+        that.broadcast(new Message('mousemove', { x: offsetX/scale, y: offsetY/scale }), this);
     });
     window.addEventListener('touchmove', function (e) {
         touchMove(that, e);
@@ -92,14 +87,22 @@ Game.prototype.receiveMessage = function(message, sender) {
 
 Game.prototype.update = function() {
     try {
-    var frametime = 1.0/this.frameRate;
-    var that = this;
-	
-    this.levelStage.update(frametime);
-    for (var i = 0; i < this.layers.length; i++) {
-        this.layers[i].draw();
-    }
-    requestAnimationFrame(function() { that.update() }); 
+        var frametime = 1.0/this.frameRate;
+        if (this.timer) {
+            frametime = (new Date().getTime() - this.timer) / 1000;
+            this.timer = new Date().getTime();
+        } else {
+            this.timer = new Date();
+        }
+
+        this.renderer.clear();
+        var that = this;
+
+        this.levelStage.update(frametime);
+
+        this.renderer.render();
+
+        requestAnimationFrame(function() { that.update() }); 
     } catch (ex) {
         this.stop();
         throw ex;

@@ -50,7 +50,6 @@ GravityComponent.prototype.update = function(frameTime) {
 //Renderer component
 function ShapeComponent(config) {
 	this.shape = ShapeComponent.createShape(config.shape, config.shapemap, config);
-    config.layer.add(this.shape);
 	this.rotationOffset = config.rotation;
     if (!this.rotationOffset)
         this.rotationOffset = 0;
@@ -59,10 +58,7 @@ function ShapeComponent(config) {
 ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
     if (config.position)
         shapeConfig.position = config.position;
-    var shape = new shapeMap[shapeConfig.type](shapeConfig);
-    shape.setListening(false);
-
-    return shape;
+    return new shapeMap[shapeConfig.type](shapeConfig);
 }
 
 ShapeComponent.prototype = new Component();
@@ -73,8 +69,6 @@ ShapeComponent.prototype.initialize = function(){
 ShapeComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'move')
 		this.shape.setPosition(message.data.x, message.data.y);
-	else if (message.subject == 'kill')
-		this.shape.remove();
 	else if (message.subject == 'rotate') 
 		this.shape.setRotation(-message.data-this.rotationOffset);
     else if (message.subject == 'size')
@@ -82,7 +76,11 @@ ShapeComponent.prototype.receiveMessage = function(message) {
 }
 
 ShapeComponent.prototype.getHandledMessages = function() { 
-    return ['move', 'kill', 'rotate', 'size'];
+    return ['move', 'rotate', 'size'];
+}
+
+ShapeComponent.prototype.update = function(frametime) {
+    this.owner.game.renderer.receiveMessage(new Message('render', this.shape));
 }
 
 function ControllerComponent() {
@@ -301,6 +299,7 @@ function ExhaustComponent(config) {
 	this.velocity = {x:0, y:0};
 	this.nparticles = config.pipes;
 	this.rotation = 0;
+    this.timer = new Date().getTime();
 }
 
 ExhaustComponent.prototype = new Component();
@@ -316,8 +315,10 @@ ExhaustComponent.prototype.receiveMessage = function(message) {
         var direction = vectorInvert(vectorNormalize(this.velocity));
         var exhaustDirection = getDirectionFromAngle(this.rotation);
         var position = {x:this.position.x-exhaustDirection.x*10, y:this.position.y-exhaustDirection.y*10};
-        for (var i = 0; i < this.nparticles; i++){
-            this.owner.game.objectFactory.createParticle({ position: position, 
+
+        if (new Date().getTime() - this.timer >= 10/this.nparticles) {
+            this.timer = new Date().getTime();
+            this.owner.stage.objectFactory.createParticle({ position: position, 
                     angle: this.rotation-Math.PI, 
                     speed: vectorLength(this.velocity)+100, 
                     size: Math.random()*5, 
@@ -349,7 +350,7 @@ AsteroidSizeComponent.prototype.receiveMessage = function(message) {
 	            var velocity = getDirectionFromAngle(Math.random()*2*Math.PI);
             	velocity = vectorScale(velocity, 200);
 
-				this.owner.game.receiveMessage(new Message('spawn', { type: 'asteroid', config: { position: this.position, size: this.size-1, velocity: velocity, points: 100*(this.size-1) }}, this));
+				this.owner.stage.receiveMessage(new Message('spawn', { type: 'asteroid', config: { position: this.position, size: this.size-1, velocity: velocity, points: 100*(this.size-1) }}, this));
 			}
 		}
 	} else if (message.subject == 'move') {
@@ -415,7 +416,7 @@ GunComponent.prototype.update = function(frameTime) {
 	if (this.fire && this.cooldownTimer <= 0) {
         for (var i = 0; i < this.barrels; i++) {
 	        var finalAngle = this.rotation+this.spread*Math.random()-this.spread/2;
-            this.owner.game.receiveMessage(new Message('spawn', { type: 'bullet', config: { position: this.position, velocity: vectorScale(getDirectionFromAngle(finalAngle),800), initial: finalAngle}}, this));
+            this.owner.stage.receiveMessage(new Message('spawn', { type: 'bullet', config: { position: this.position, velocity: vectorScale(getDirectionFromAngle(finalAngle),800), initial: finalAngle}}, this));
         }
 		this.cooldownTimer = this.cooldown;		
 	}
@@ -439,8 +440,8 @@ DestroyOutOfBoundsComponent.prototype.getHandledMessages = function() {
 }
 
 DestroyOutOfBoundsComponent.prototype.update = function(frameTime) {
-	if (this.position.x < -200 || this.position.x > this.owner.game.stageWidth + 200 || 
-	    this.position.y < -200 || this.position.y > this.owner.game.stageHeight + 200) {
+	if (this.position.x < -200 || this.position.x > this.owner.stage.stageWidth + 200 || 
+	    this.position.y < -200 || this.position.y > this.owner.stage.stageHeight + 200) {
 		this.owner.broadcast(new Message('kill', { mode: 'final' }, this));
 	}
 	
@@ -458,10 +459,10 @@ CollisionComponent.prototype.initialize = function() {
 CollisionComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'shape') {
 		this.shape = message.data;
-		this.owner.game.collisionManager.unregister(this.owner);
-		this.owner.game.collisionManager.register({shape: this.shape, object: this.owner});
+		this.owner.stage.collisionManager.unregister(this.owner);
+		this.owner.stage.collisionManager.register({shape: this.shape, object: this.owner});
 	} else if (message.subject == 'kill') {
-		this.owner.game.collisionManager.unregister(this.owner);
+		this.owner.stage.collisionManager.unregister(this.owner);
 	}
 }
 
@@ -504,7 +505,7 @@ ExplodeOnKillComponent.prototype.initialize = function() {
 ExplodeOnKillComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'kill' && (message.data == null || message.data.mode != 'final')) { 
 		for (var i = 0; i < this.particleCount; i++) {
-            this.owner.game.objectFactory.createParticle({ position: this.position, 
+            this.owner.stage.objectFactory.createParticle({ position: this.position, 
                                                            angle: 0, 
                                                            speed: this.particleSize*50*(Math.random()+0.5), 
                                                            size: Math.random()*this.particleSize, 

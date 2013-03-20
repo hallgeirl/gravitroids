@@ -1,6 +1,6 @@
-function ObjectFactory(game, objectLayers) {
-	this.objectLayers = objectLayers;
+function ObjectFactory(game, stage) {
 	this.game = game;
+    this.stage = stage;
     this.componentMap = {}
 
     this.componentMap['shape'] = ShapeComponent;
@@ -23,13 +23,13 @@ function ObjectFactory(game, objectLayers) {
     this.componentMap['points'] = PointsComponent;
     
     this.shapeMap = {}
-    this.shapeMap['wedge'] = Kinetic.Wedge;
-    this.shapeMap['regularpolygon'] = Kinetic.RegularPolygon;
-    this.shapeMap['circle'] = Kinetic.Circle;
+    this.shapeMap['wedge'] = Wedge;
+    this.shapeMap['regularpolygon'] = RegularPolygon;
+    this.shapeMap['circle'] = Circle;
 }
 
 ObjectFactory.prototype.createObject = function(template, config) {
-    var go = new GameObject(this.game);
+    var go = new GameObject(this.game, this.stage);
     go.type = template.type;
 
     for (var i = 0; i < template.components.length; i++)
@@ -44,7 +44,6 @@ ObjectFactory.prototype.createComponent = function(template, config) {
     var finalTemplate = ObjectFactory.getFinalComponentConfig(template, config);
     
     finalTemplate['shapemap'] = this.shapeMap;
-    finalTemplate['layer'] = this.objectLayers[0];
     var component = new this.componentMap[template.type](finalTemplate);
     component.type = template.type;
 
@@ -106,5 +105,5 @@ ObjectFactory.prototype.createParticle = function(config) {
 
     config.velocity = velocity;
 
-    this.game.receiveMessage(new Message('spawn', { type: 'particle', config: config }));
+    this.stage.receiveMessage(new Message('spawn', { type: 'particle', config: config }));
 }

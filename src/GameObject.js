@@ -1,8 +1,9 @@
 var objectCounter = 0;
 
 //game objects
-function GameObject(game) {
+function GameObject(game, stage) {
 	this.game = game;
+    this.stage = stage;
 	this.components = [];
 	this.alive = true;
 	this.id = objectCounter;
@@ -16,7 +17,6 @@ GameObject.prototype.addComponent = function(component) {
 	this.components.push(component);
 	component.owner = this;
     this.componentMap[component.type] = component;
-	//this.components.sort(function(comp) { return comp.sequence; });
 
     var messageSinks = component.getHandledMessages();
     for (var i = 0; i < messageSinks.length; i++) {
@@ -41,7 +41,7 @@ GameObject.prototype.broadcast = function(message, sender) {
 
 	if (message.subject == 'kill' || message.subject == 'score') {
 		this.alive = false;
-        this.game.receiveMessage(message);
+        this.stage.receiveMessage(message);
 	}
 }
 

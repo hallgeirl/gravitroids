@@ -11,8 +11,8 @@ var ship =
                 fill: 'red',
                 stroke: 'black',
                 strokeWidth: 2,
-                angleDeg: 45,
-                offset: [15,7]
+                angle: Math.PI/4,
+                offset: [-15,-7]
             },
             rotation: 3.55
         },
@@ -84,7 +84,7 @@ var bullet =
                 stroke: 'none',
                 strokeWidth: 0
             },
-            rotation: -Math.PI/2
+            rotation: 0
         },
         {
             type: 'spatial',
@@ -123,7 +123,7 @@ var asteroid =
             shape: 
             {
                 type: 'regularpolygon',
-                sides: Math.floor((Math.random()*10)+5), radius: 25,
+                sides: '$Math.floor((Math.random()*10)+5)', radius: 25,
                 fill: 'gray',
                 stroke: 'black',
                 strokeWidth: 2,
