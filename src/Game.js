@@ -9,7 +9,8 @@ function Message(subject, data, sender) {
 }
 
 function Game(container, height, aspectRatio, layers) {
-    this.renderer = new Renderer(container, height, aspectRatio);
+    this.messageDispatcher = new MessageDispatcher();
+    this.renderer = new Renderer(this.messageDispatcher, container, height, aspectRatio);
     this.container = container;
     this.aspectRatio = aspectRatio;
 	this.frameRate = 50;
@@ -21,7 +22,7 @@ function Game(container, height, aspectRatio, layers) {
 
     this.scaleSceneToWindow();
     this.attachEventListeners();
-    this.levelStage = new Stage(this, this.layers, this.stageWidth, this.stageHeight);
+    this.levelStage = new Stage(this, this.stageWidth, this.stageHeight, this.messageDispatcher);
 }
 
 Game.prototype.scaleSceneToWindow = function() {

@@ -1,4 +1,6 @@
-function Renderer(container, height, aspectRatio) {
+function Renderer(messageDispatcher, container, height, aspectRatio) {
+    this.messageDispatcher = messageDispatcher;
+    this.messageDispatcher.registerHandler('render', this);
     this.container = container;   
     var width = height * aspectRatio;
     this.createCanvas(width, height);

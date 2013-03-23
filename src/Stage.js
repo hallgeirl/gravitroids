@@ -1,7 +1,13 @@
-function Stage(game, layers, stageWidth, stageHeight) {
-	this.collisionManager = new CollisionManager();
-    this.layers = layers;
-	this.objectFactory = new ObjectFactory(game, this, this.layers);
+function Stage(game, stageWidth, stageHeight, messageDispatcher) {
+	this.collisionManager = new CollisionManager(messageDispatcher);
+
+    this.messageDispatcher = messageDispatcher;
+    this.messageDispatcher.registerHandler('kill', this, null);
+    this.messageDispatcher.registerHandler('spawn', this, null);
+    this.messageDispatcher.registerHandler('create-particle', this, null);
+    this.messageDispatcher.registerHandler('score', this, null);
+
+	this.objectFactory = new ObjectFactory(game, this, this.messageDispatcher);
     this.game = game;
     this.objectMap = {};
     this.objectMap['ship'] = ship;
@@ -92,6 +98,9 @@ Stage.prototype.broadcast = function(message, sender) {
 
 Stage.prototype.receiveMessage = function(message, sender) {
 	switch (message.subject) {
+        case 'create-particle':
+            this.objectFactory.createParticle(message.data);
+            break;   
         case 'spawn':
             this.spawnObject(message.data.type, message.data.config);
             break;   

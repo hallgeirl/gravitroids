@@ -1,9 +1,9 @@
 var objectCounter = 0;
 
 //game objects
-function GameObject(game, stage) {
-	this.game = game;
+function GameObject(stage, messageDispatcher) {
     this.stage = stage;
+    this.messageDispatcher = messageDispatcher;
 	this.components = [];
 	this.alive = true;
 	this.id = objectCounter;
@@ -41,7 +41,7 @@ GameObject.prototype.broadcast = function(message, sender) {
 
 	if (message.subject == 'kill' || message.subject == 'score') {
 		this.alive = false;
-        this.stage.receiveMessage(message);
+        this.messageDispatcher.sendMessage(message);
 	}
 }
 
@@ -53,7 +53,7 @@ GameObject.prototype.update = function(frameTime) {
 
 GameObject.prototype.initialize = function() {
 	for (var i = 0; i < this.components.length; i++) {
-		this.components[i].initialize();
+		this.components[i].initialize(this.messageDispatcher);
 	}
 }
 

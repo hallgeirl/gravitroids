@@ -1,5 +1,15 @@
-function CollisionManager() {
+function CollisionManager(messageDispatcher) {
 	this.collidables = [];
+    this.messageDispatcher = messageDispatcher;
+    this.messageDispatcher.registerHandler('register-collision-target', this);
+    this.messageDispatcher.registerHandler('unregister-collision-target', this);
+}
+
+CollisionManager.prototype.receiveMessage = function(message) {
+    if (message.subject == 'unregister-collision-target')
+        this.unregister(message.data);
+    else if (message.subject == 'register-collision-target') 
+        this.register(message.data);
 }
 
 CollisionManager.prototype.register = function(obj, shape) {
