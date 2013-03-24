@@ -2,8 +2,12 @@
 Components
 */
 function Component(config, messageDispatcher) {
+    if (!config)
+        return;
+
 	this.owner = null;
     this.messageDispatcher = messageDispatcher;
+    this.messageTag = config.messageTag;
 }
 
 Component.prototype.receiveMessage = function(message) {}
@@ -15,11 +19,26 @@ Component.prototype.getHandledMessages = function() {
     return [];
 }
 
+Component.prototype.registerMessage = function(subject, tag) {
+    if (typeof(tag) == 'undefined')
+        tag = this.messageTag;
+
+    this.messageDispatcher.registerHandler(subject, this, tag);
+}
+
+Component.prototype.sendMessage = function(message, tag) {
+    if (typeof(tag) == 'undefined')
+        tag = this.messageTag;
+
+    this.messageDispatcher.sendMessage(message, tag);
+}
+
 //spatial component
 function SpatialComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
 	this.position = config.position;
 	this.velocity = config.velocity;
+    messageDispatcher.registerHandler('accel', this, this.messageTag);
 }
 
 SpatialComponent.prototype = new Component();
@@ -27,8 +46,8 @@ SpatialComponent.prototype.update = function(frameTime) {
 	this.position.x += this.velocity.x * frameTime;
 	this.position.y += this.velocity.y * frameTime;
 
-	this.owner.broadcast(new Message('move', { x: this.position.x, y: this.position.y }, this));
-	this.owner.broadcast(new Message('speed', { x: this.velocity.x, y: this.velocity.y }, this));
+	this.sendMessage(new Message('move', { x: this.position.x, y: this.position.y }, this));
+	this.sendMessage(new Message('speed', { x: this.velocity.x, y: this.velocity.y }, this));
 }
 
 SpatialComponent.prototype.receiveMessage = function(message) {
@@ -36,10 +55,6 @@ SpatialComponent.prototype.receiveMessage = function(message) {
 		this.velocity.x += message.data.x;
 		this.velocity.y += message.data.y;
 	}
-}
-
-SpatialComponent.prototype.getHandledMessages = function() { 
-    return ['accel'];
 }
 
 //gravity component
@@ -50,7 +65,7 @@ function GravityComponent(config, messageDispatcher) {
 
 GravityComponent.prototype = new Component();
 GravityComponent.prototype.update = function(frameTime) {
-	this.owner.broadcast(new Message('accel', { x: 0, y: -this.gravity*frameTime }));
+	this.sendMessage(new Message('accel', { x: 0, y: -this.gravity*frameTime }));
 }
 
 //Renderer component
@@ -60,6 +75,10 @@ function ShapeComponent(config, messageDispatcher) {
 	this.rotationOffset = config.rotation;
     if (!this.rotationOffset)
         this.rotationOffset = 0;
+
+    this.registerMessage('move');
+    this.registerMessage('rotate');
+    this.registerMessage('size');
 }
 
 ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
@@ -70,7 +89,7 @@ ShapeComponent.createShape = function(shapeConfig, shapeMap, config) {
 
 ShapeComponent.prototype = new Component();
 ShapeComponent.prototype.initialize = function(){
-	this.owner.broadcast(new Message('shape', this.shape, this));
+	this.sendMessage(new Message('shape', this.shape, this));
 }
 
 ShapeComponent.prototype.receiveMessage = function(message) {
@@ -82,16 +101,14 @@ ShapeComponent.prototype.receiveMessage = function(message) {
         this.shape.setRadius(message.data);
 }
 
-ShapeComponent.prototype.getHandledMessages = function() { 
-    return ['move', 'rotate', 'size'];
-}
-
 ShapeComponent.prototype.update = function(frametime) {
-    this.messageDispatcher.sendMessage(new Message('render', this.shape));
+    this.sendMessage(new Message('render', this.shape), null);
 }
 
 function ControllerComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
+    this.registerMessage('mousemove', null);
+
 	this.pressed = {};
     this.mouse = { left: false, right: false, position: {x:0, y:0}};
 	var that = this;
@@ -124,25 +141,25 @@ function ControllerComponent(config, messageDispatcher) {
 ControllerComponent.prototype = new Component();
 ControllerComponent.prototype.update = function(frameTime) {
     if (this.mouse.left){
-        this.owner.broadcast(new Message('control', { button: 'mouseleft', position: this.mouse.position }));
+        this.sendMessage(new Message('control', { button: 'mouseleft', position: this.mouse.position }));
     }
     if (this.mouse.right){
-        this.owner.broadcast(new Message('control', { button: 'mouseright', position: this.mouse.position }));
+        this.sendMessage(new Message('control', { button: 'mouseright', position: this.mouse.position }));
     }
 	if (this.pressed[38]) {
-		this.owner.broadcast(new Message('control', { button: 'up' }, this));
+		this.sendMessage(new Message('control', { button: 'up' }, this));
 	}
 	if (this.pressed[40]) {
-		this.owner.broadcast(new Message('control', { button: 'down' }, this));
+		this.sendMessage(new Message('control', { button: 'down' }, this));
 	}
 	if (this.pressed[37]) {
-		this.owner.broadcast(new Message('control', { button: 'left' }, this));
+		this.sendMessage(new Message('control', { button: 'left' }, this));
 	}
 	if (this.pressed[39]) {
-		this.owner.broadcast(new Message('control', { button: 'right' }, this));
+		this.sendMessage(new Message('control', { button: 'right' }, this));
 	}
 	if (this.pressed[17]) {
-		this.owner.broadcast(new Message('control', { button: 'ctrl' }, this));
+		this.sendMessage(new Message('control', { button: 'ctrl' }, this));
 	}
 }
 ControllerComponent.prototype.receiveMessage = function(message) {
@@ -162,6 +179,10 @@ function AccelleratorComponent(config, messageDispatcher) {
 	this.position = {x:0, y:0};
 	this.magnitude = config.magnitude;
 	this.rotation = 0;
+
+    this.registerMessage('control');
+    this.registerMessage('move');
+    this.registerMessage('rotate');
 }
 
 AccelleratorComponent.prototype = new Component();
@@ -169,7 +190,7 @@ AccelleratorComponent.prototype.update = function(frameTime) {
     if (this.accel.x == 0 && this.accel.y == 0)
         return;
 
-	this.owner.broadcast(new Message('accel', {x: this.accel.x*frameTime, y:this.accel.y*frameTime, trigger:'control'}, this))
+	this.sendMessage(new Message('accel', {x: this.accel.x*frameTime, y:this.accel.y*frameTime, trigger:'control'}));
 	this.accel.x = this.accel.y = 0;
 }
 
@@ -195,14 +216,11 @@ AccelleratorComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
-AccelleratorComponent.prototype.getHandledMessages = function() { 
-    return ['move', 'control', 'rotate'];
-}
-
 function FrictionComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
 	this.magnitude = config.friction;
 	this.velocity = {x:0, y:0};
+    this.registerMessage('speed');
 }
 
 FrictionComponent.prototype = new Component();
@@ -211,10 +229,6 @@ FrictionComponent.prototype.receiveMessage = function(message) {
 		this.velocity.x = message.data.x;
 		this.velocity.y = message.data.y;
 	}
-}
-
-FrictionComponent.prototype.getHandledMessages = function() { 
-    return ['speed'];
 }
 
 FrictionComponent.prototype.update = function(frameTime) {
@@ -234,7 +248,7 @@ FrictionComponent.prototype.update = function(frameTime) {
 	else
 		y = Math.min(direction.y*this.magnitude*frameTime, -this.velocity.y);
 	
-	this.owner.broadcast(new Message('accel', {x: x, y:y}, this));
+	this.sendMessage(new Message('accel', { x: x, y: y }, this));
 }
 
 function LifetimeComponent(config, messageDispatcher) {
@@ -246,7 +260,7 @@ LifetimeComponent.prototype = new Component();
 LifetimeComponent.prototype.update = function(frameTime) {
 	this.lifetime -= frameTime;
 	if (this.lifetime <= 0) {
-		this.owner.broadcast(new Message('kill',null,this));
+		this.sendMessage(new Message('kill',null,this));
 	}
 }
 
@@ -256,15 +270,16 @@ function RotationComponent(config, messageDispatcher) {
 	this.angleDiff = 0;
 	this.rotationSpeed = config.speed;
     this.position = {x:0, y:0};
+    this.registerMessage('control');
+    this.registerMessage('move');
 }
 
 RotationComponent.prototype = new Component();
 RotationComponent.prototype.initialize = function() {
-	this.owner.broadcast(new Message('rotate', this.angle, this));
+	this.sendMessage(new Message('rotate', this.angle, this));
 }
 
 RotationComponent.prototype.receiveMessage = function(message) {
-	
 	if (message.subject == 'control') {
 	
 		switch (message.data.button) {
@@ -286,10 +301,6 @@ RotationComponent.prototype.receiveMessage = function(message) {
     }
 }
 
-RotationComponent.prototype.getHandledMessages = function() { 
-    return ['control', 'move'];
-}
-
 RotationComponent.prototype.update = function(frameTime) {
 	if (this.angleDiff == 0) 
 		return;
@@ -303,7 +314,7 @@ RotationComponent.prototype.update = function(frameTime) {
 		this.angle -= 2*Math.PI;
 	
 	this.angleDiff = 0;	
-	this.owner.broadcast(new Message('rotate', this.angle, this));
+	this.sendMessage(new Message('rotate', this.angle, this));
 }
 
 function ExhaustComponent(config, messageDispatcher) {
@@ -313,6 +324,10 @@ function ExhaustComponent(config, messageDispatcher) {
 	this.nparticles = config.pipes;
 	this.rotation = 0;
     this.timer = new Date().getTime();
+    this.registerMessage('accel');
+    this.registerMessage('speed');
+    this.registerMessage('rotate');
+    this.registerMessage('move');
 }
 
 ExhaustComponent.prototype = new Component();
@@ -341,20 +356,19 @@ ExhaustComponent.prototype.receiveMessage = function(message) {
     }
 }
 
-ExhaustComponent.prototype.getHandledMessages = function() { 
-    return ['speed', 'rotate', 'move', 'accel'];
-}
-
 function AsteroidSizeComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
 	this.position = {x: 0, y:0};
 	this.size = config.size;
-	this.health = config.size*500;
+	this.health = config.size*400;
+    this.registerMessage('kill');
+    this.registerMessage('move');
+    this.registerMessage('collide');
 }
 
 AsteroidSizeComponent.prototype = new Component();
 AsteroidSizeComponent.prototype.initialize = function() {
-    this.owner.broadcast(new Message('size', this.size*25, this));
+    this.sendMessage(new Message('size', this.size*25, this));
 }
 
 AsteroidSizeComponent.prototype.receiveMessage = function(message) {
@@ -375,13 +389,9 @@ AsteroidSizeComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
-AsteroidSizeComponent.prototype.getHandledMessages = function() { 
-    return ['kill', 'move', 'collide'];
-}
-
 AsteroidSizeComponent.prototype.update = function(frameTime) {
 	if (this.health <= 0) {
-		this.owner.broadcast(new Message('kill', null, this));
+		this.sendMessage(new Message('kill', null, this));
 	}
 }
 
@@ -395,20 +405,24 @@ function ContinuousRotationComponent(config, messageDispatcher) {
 ContinuousRotationComponent.prototype = new Component();
 ContinuousRotationComponent.prototype.update = function(frameTime) {
 	if (this.direction > 0)
-		this.owner.broadcast(new Message('control', { button: 'right' }, this));	
+		this.sendMessage(new Message('control', { button: 'right' }, this));	
 	else
-		this.owner.broadcast(new Message('control', { button: 'left' }, this));	
+		this.sendMessage(new Message('control', { button: 'left' }, this));	
 }
 
 function GunComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
-    this.barrels = config.barrels;
 	this.position = {x: 0, y:0};
 	this.rotation = 0;
 	this.fire = false;
-	this.cooldown = 0.05;
 	this.cooldownTimer = 0;
-	this.spread = config.spread;
+    this.sound = config.sound;
+    this.registerMessage('move');
+    this.registerMessage('rotate');
+    this.registerMessage('control');
+    this.registerMessage('set-weapon-level');
+    this.levels = config.levels;
+    this.setWeaponLevel(0);
 }
 
 GunComponent.prototype = new Component();
@@ -419,11 +433,15 @@ GunComponent.prototype.receiveMessage = function(message) {
 		this.rotation = message.data;
 	} else if (message.subject == 'control' && (message.data.button == 'ctrl' || message.data.button == 'mouseleft')) {
 		this.fire = true;
-	}
+	} else if (message.subject == 'set-weapon-level') {
+        this.setWeaponLevel(message.data-1);
+    }
 }
 
-GunComponent.prototype.getHandledMessages = function() { 
-    return ['move', 'rotate', 'control'];
+GunComponent.prototype.setWeaponLevel = function(level) {
+	this.cooldown = this.levels[level].cooldown;
+	this.spread = this.levels[level].spread;
+    this.barrels = this.levels[level].barrels;
 }
 
 GunComponent.prototype.update = function(frameTime) {
@@ -434,6 +452,8 @@ GunComponent.prototype.update = function(frameTime) {
 	        var finalAngle = this.rotation+this.spread*Math.random()-this.spread/2;
             this.messageDispatcher.sendMessage(new Message('spawn', { type: 'bullet', config: { position: this.position, velocity: vectorScale(getDirectionFromAngle(finalAngle),800), initial: finalAngle}}, this));
         }
+        if (this.sound)
+            this.messageDispatcher.sendMessage(new Message('play-sound', this.sound));
 		this.cooldownTimer = this.cooldown;		
 	}
 	
@@ -443,6 +463,7 @@ GunComponent.prototype.update = function(frameTime) {
 function DestroyOutOfBoundsComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
 	this.position = {x: 0, y:0};
+    this.registerMessage('move');
 }
 
 DestroyOutOfBoundsComponent.prototype = new Component();
@@ -452,14 +473,10 @@ DestroyOutOfBoundsComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
-DestroyOutOfBoundsComponent.prototype.getHandledMessages = function() { 
-    return ['move'];
-}
-
 DestroyOutOfBoundsComponent.prototype.update = function(frameTime) {
 	if (this.position.x < -200 || this.position.x > this.owner.stage.stageWidth + 200 || 
 	    this.position.y < -200 || this.position.y > this.owner.stage.stageHeight + 200) {
-		this.owner.broadcast(new Message('kill', { mode: 'final' }, this));
+		this.sendMessage(new Message('kill', { mode: 'final' }, this));
 	}
 	
 }
@@ -468,6 +485,8 @@ function CollisionComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
 	this.position = {x: 0, y:0};
 	this.shape = null;
+    this.registerMessage('shape');
+    this.registerMessage('kill');
 }
 
 CollisionComponent.prototype = new Component();
@@ -482,28 +501,21 @@ CollisionComponent.prototype.receiveMessage = function(message) {
 	}
 }
 
-CollisionComponent.prototype.getHandledMessages = function() { 
-    return ['shape', 'kill'];
-}
-
 CollisionComponent.prototype.update = function(frameTime) {
 	
 }
 
 function DieOnCollisionComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
+    this.registerMessage('collide');
 }
 
 DieOnCollisionComponent.prototype = new Component();
 
 DieOnCollisionComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'collide' && this.owner.type != message.data.other.type && this.owner.type == 'bullet') { 
-		this.owner.broadcast(new Message('kill', null, this));
+		this.sendMessage(new Message('kill', null, this));
 	}
-}
-
-DieOnCollisionComponent.prototype.getHandledMessages = function() { 
-    return ['collide'];
 }
 
 function ExplodeOnKillComponent(config, messageDispatcher) {
@@ -512,6 +524,9 @@ function ExplodeOnKillComponent(config, messageDispatcher) {
 	this.particleCount = config.particlecount;
 	this.explosionSize = config.size;
 	this.position = {x:0, y:0};
+    this.sound = config.sound;
+    this.registerMessage('kill');
+    this.registerMessage('move');
 }
 
 ExplodeOnKillComponent.prototype = new Component();
@@ -526,29 +541,24 @@ ExplodeOnKillComponent.prototype.receiveMessage = function(message) {
                                                            lifetime: this.explosionSize, 
                                                            randomizeAngle: Math.PI*2}));
 		}
+        if (this.sound)
+            this.messageDispatcher.sendMessage(new Message('play-sound', this.sound));
 	} else if (message.subject == 'move') {
 		this.position = message.data;
 	}
 }
 
-ExplodeOnKillComponent.prototype.getHandledMessages = function() { 
-    return ['kill', 'move'];
-}
-
 function DieOnAsteroidCollisionComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
+    this.registerMessage('collide');
 }
 
 DieOnAsteroidCollisionComponent.prototype = new Component();
 
 DieOnAsteroidCollisionComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'collide' && message.data.other.type == 'asteroid') { 
-		this.owner.broadcast(new Message('kill', null, this));
+		this.sendMessage(new Message('kill', null, this));
 	}
-}
-
-DieOnAsteroidCollisionComponent.prototype.getHandledMessages = function() { 
-    return ['collide'];
 }
 
 function SizeComponent(config, messageDispatcher) {
@@ -558,20 +568,44 @@ function SizeComponent(config, messageDispatcher) {
 
 SizeComponent.prototype = new Component();
 SizeComponent.prototype.initialize = function() {
-    this.owner.broadcast(new Message('size', this.size, this));
+    this.sendMessage(new Message('size', this.size, this));
 }
 
 function PointsComponent(config, messageDispatcher) {
     Component.call(this, config, messageDispatcher);
     this.points = config.points;
+    this.registerMessage('kill');
 }
 
 PointsComponent.prototype = new Component();
 PointsComponent.prototype.receiveMessage = function(message) {
     if (message.subject == 'kill' && (!message.data || message.data.mode == null || message.data.mode != 'final')) 
-        this.messageDispatcher.sendMessage(new Message('score', this.points, this));
+        this.sendMessage(new Message('score', this.points, this));
 }
 
-PointsComponent.prototype.getHandledMessages = function() { 
-    return ['kill'];
+function WeaponLevelComponent(config, messageDispatcher) {
+    Component.call(this, config, messageDispatcher);
+    this.level = 1;
+    this.experience = 0;
+    this.registerMessage('score', null);
+    this.updateExperienceAndLevel();
 }
+
+WeaponLevelComponent.prototype = new Component();
+WeaponLevelComponent.prototype.receiveMessage = function(message) {
+    if (message.subject == 'score') {
+        this.experience += message.data;
+        this.updateExperienceAndLevel();
+    }
+}
+
+WeaponLevelComponent.prototype.updateExperienceAndLevel = function() {
+    if (this.experience >= this.targetExperience) {
+        this.experience -= this.targetExperience;
+        this.level ++;
+        this.sendMessage(new Message('set-weapon-level', this.level));
+    }
+    this.targetExperience = 1000*Math.pow(2,this.level-1);
+    this.sendMessage(new Message('experience', { currentXP: this.experience, targetXP: this.targetExperience }));
+}
+

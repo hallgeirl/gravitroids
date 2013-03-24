@@ -1,4 +1,4 @@
-var objectCounter = 0;
+var objectCounter = 1;
 
 //game objects
 function GameObject(stage, messageDispatcher) {
@@ -11,39 +11,24 @@ function GameObject(stage, messageDispatcher) {
 
     this.messageChannels = {};
     this.componentMap = {};
+    this.messageDispatcher.registerHandler('kill', this, this.id);
 }
 
 GameObject.prototype.addComponent = function(component) {
 	this.components.push(component);
 	component.owner = this;
     this.componentMap[component.type] = component;
-
-    var messageSinks = component.getHandledMessages();
-    for (var i = 0; i < messageSinks.length; i++) {
-        if (!this.messageChannels[messageSinks[i]])
-            this.messageChannels[messageSinks[i]] = [];
-        
-        this.messageChannels[messageSinks[i]].push(component);
-    }
 }
 
 GameObject.prototype.getComponent = function(name) {
     return this.componentMap[name];
 }
 
-GameObject.prototype.broadcast = function(message, sender) {
-    var channel = this.messageChannels[message.subject];
-    if (channel) {
-        for (var i = 0; i < channel.length; i++) {
-            channel[i].receiveMessage(message, sender);
-        }
-    }
-
-	if (message.subject == 'kill' || message.subject == 'score') {
-		this.alive = false;
-        this.messageDispatcher.sendMessage(message);
-	}
+GameObject.prototype.receiveMessage = function(message, sender) {
+    if (message.subject == 'kill') 
+        this.alive = false;
 }
+
 
 GameObject.prototype.update = function(frameTime) {
 	for (var i = 0; i < this.components.length; i++) {

@@ -10,6 +10,7 @@ function Message(subject, data, sender) {
 
 function Game(container, height, aspectRatio, layers) {
     this.messageDispatcher = new MessageDispatcher();
+    this.audioSystem = new AudioSystem(container, 32, this.messageDispatcher);
     this.renderer = new Renderer(this.messageDispatcher, container, height, aspectRatio);
     this.container = container;
     this.aspectRatio = aspectRatio;
@@ -33,7 +34,7 @@ Game.prototype.scaleSceneToWindow = function() {
     if (width > window.innerWidth)
     {
         width = window.innerWidth;
-        height = width / aspectRatio;
+        height = width / this.aspectRatio;
     }
     this.scaleScene(width, height);
 }
@@ -49,7 +50,7 @@ Game.prototype.scaleScene = function(width, height) {
 
 function touchMove(that, e) {
     var scale = that.renderer.getScale();
-    that.broadcast(new Message('mousemove', { x: e.targetTouches[0].pageX/scale, y: e.targetTouches[0].pageY/scale }), this);
+    that.messageDispatcher.sendMessage(new Message('mousemove', { x: e.targetTouches[0].pageX/scale, y: e.targetTouches[0].pageY/scale }, that));
 }
 
 Game.prototype.attachEventListeners = function() {
@@ -62,7 +63,7 @@ Game.prototype.attachEventListeners = function() {
         var scale = that.renderer.getScale();
         var offsetX = e.offsetX==undefined?e.layerX:e.offsetX;
         var offsetY = e.offsetY==undefined?e.layerY:e.offsetY;
-        that.broadcast(new Message('mousemove', { x: offsetX/scale, y: offsetY/scale }), this);
+        that.messageDispatcher.sendMessage(new Message('mousemove', { x: offsetX/scale, y: offsetY/scale }, that));
     });
     window.addEventListener('touchmove', function (e) {
         touchMove(that, e);
@@ -76,10 +77,6 @@ Game.prototype.attachEventListeners = function() {
         }
         return false;
     }, false);
-}
-
-Game.prototype.broadcast = function(message, sender) {
-    this.levelStage.broadcast(message, sender);
 }
 
 Game.prototype.receiveMessage = function(message, sender) {

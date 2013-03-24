@@ -45,8 +45,8 @@ CollisionManager.prototype.checkCollisions = function() {
 			var pos1 = obj1.shape.getPosition();
 			var pos2 = obj2.shape.getPosition();
 			if (radius >= vectorLength(vectorDifference(pos1, pos2))) {
-				obj1.object.broadcast(new Message('collide', { other: obj2.object }, this));
-				obj2.object.broadcast(new Message('collide', { other: obj1.object }, this));
+				this.messageDispatcher.sendMessage(new Message('collide', { other: obj2.object }, this), obj1.object.id);
+				this.messageDispatcher.sendMessage(new Message('collide', { other: obj1.object }, this), obj2.object.id);
 			}
 		}
 	}

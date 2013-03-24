@@ -49,8 +49,34 @@ var ship =
         },
         {
             type: 'gun',
-            spread: 0.1,
-            barrels: 1
+            levels: [
+                {
+                    cooldown: 0.1,
+                    spread: 0.1,
+                    barrels: 1
+                },
+                {
+                    cooldown: 0.075,
+                    spread: 0.1,
+                    barrels: 1
+                },
+                {
+                    cooldown: 0.05,
+                    spread: 0.05,
+                    barrels: 1
+                },
+                {
+                    cooldown: 0.1,
+                    spread: 0.15,
+                    barrels: 2
+                },
+                {
+                    cooldown: 0.075,
+                    spread: 0.1,
+                    barrels: 2
+                }
+            ],
+            sound: 'sound/gun.ogg'
         },
         {
             type: 'collision'
@@ -59,13 +85,17 @@ var ship =
             type: 'explodeonkill',
             particlesize: 20,
             particlecount: 100,
-            size: 5
+            size: 5,
+            sound: 'sound/explode3.ogg'
         },
         {
             type: 'dieonasteroidcollision'
         },
         {
             type: 'destroyoutofbounds'
+        },
+        {
+            type: 'weaponlevel'
         }
     ]
 }
@@ -103,7 +133,8 @@ var bullet =
             type: 'explodeonkill',
             particlesize: 5,
             particlecount: 5,
-            size: 1
+            size: 1,
+            sound: 'sound/explode2.ogg'
         },
         {
             type: 'dieonasteroidcollision'
@@ -158,7 +189,8 @@ var asteroid =
             type: 'explodeonkill',
             particlesize: 5,
             particlecount: 5,
-            size: 0.5
+            size: 0.5,
+            sound: 'sound/explode.ogg'
         },
         {
             type: 'destroyoutofbounds'

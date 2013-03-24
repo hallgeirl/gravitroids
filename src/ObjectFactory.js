@@ -22,6 +22,7 @@ function ObjectFactory(game, stage, messageDispatcher) {
     this.componentMap['lifetime'] = LifetimeComponent;
     this.componentMap['size'] = SizeComponent;
     this.componentMap['points'] = PointsComponent;
+    this.componentMap['weaponlevel'] = WeaponLevelComponent;
     
     this.shapeMap = {}
     this.shapeMap['wedge'] = Wedge;
@@ -32,7 +33,8 @@ function ObjectFactory(game, stage, messageDispatcher) {
 ObjectFactory.prototype.createObject = function(template, config) {
     var go = new GameObject(this.stage, this.messageDispatcher);
     go.type = template.type;
-
+    config.messageTag = go.id;
+    
     for (var i = 0; i < template.components.length; i++)
         go.addComponent(this.createComponent(template.components[i], config));
 
