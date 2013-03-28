@@ -183,6 +183,7 @@ function AccelleratorComponent(config, messageDispatcher) {
     this.registerMessage('control');
     this.registerMessage('move');
     this.registerMessage('rotate');
+    this.registerMessage('mousemove', null);
 }
 
 AccelleratorComponent.prototype = new Component();
@@ -199,21 +200,27 @@ AccelleratorComponent.prototype.receiveMessage = function(message) {
 		var dirX = Math.cos(this.rotation);
 		var dirY = -Math.sin(this.rotation);
 		switch (message.data.button) {
-			case 'down':
-				dirY = -dirY;
-				dirX = -dirX;
-            case 'mouseright':
 			case 'up':
-				this.accel.x = dirX*this.magnitude;
-				this.accel.y = dirY*this.magnitude;
+				this.accel.y = -this.magnitude;
 				break;
+            case 'down':
+                this.accel.y = this.magnitude;
+                break;
+            case 'left':
+                this.accel.x = -this.magnitude;
+                break;
+            case 'right':
+                this.accel.x = this.magnitude;
+                break;
 		}
 	} else if (message.subject == 'move') {
 		this.position.x = message.data.x;
 		this.position.y = message.data.y;
 	} else if (message.subject == 'rotate') {
 		this.rotation = message.data;
-	}
+	} else if (message.subject == 'mousemove') {
+        
+    }
 }
 
 function FrictionComponent(config, messageDispatcher) {
@@ -272,6 +279,8 @@ function RotationComponent(config, messageDispatcher) {
     this.position = {x:0, y:0};
     this.registerMessage('control');
     this.registerMessage('move');
+    this.registerMessage('rotate-left');
+    this.registerMessage('rotate-right');
 }
 
 RotationComponent.prototype = new Component();
@@ -281,14 +290,7 @@ RotationComponent.prototype.initialize = function() {
 
 RotationComponent.prototype.receiveMessage = function(message) {
 	if (message.subject == 'control') {
-	
 		switch (message.data.button) {
-			case 'left':
-				this.angleDiff = this.rotationSpeed;
-				break;
-			case 'right':
-				this.angleDiff = -this.rotationSpeed;
-				break;
             case 'mouseright':
             case 'mouseleft':
                 var direction = vectorNormalize(vectorDifference(message.data.position, this.position));
@@ -298,6 +300,11 @@ RotationComponent.prototype.receiveMessage = function(message) {
 		}
 	} else if (message.subject == 'move') {
         this.position = message.data;
+    }
+    else if (message.subject = 'rotate-left') {
+        this.angleDiff = this.rotationSpeed;
+	} else if (message.subject = 'rotate-right') {
+        this.angleDiff = -this.rotationSpeed;
     }
 }
 
@@ -340,16 +347,15 @@ ExhaustComponent.prototype.receiveMessage = function(message) {
 	} else if (message.subject == 'move') {
 		this.position = message.data;
 	} else if (message.subject == 'accel' && message.data.trigger == 'control') {
-        var direction = vectorInvert(vectorNormalize(this.velocity));
-        var exhaustDirection = getDirectionFromAngle(this.rotation);
-        var position = {x:this.position.x-exhaustDirection.x*10, y:this.position.y-exhaustDirection.y*10};
+        var direction = vectorInvert(vectorNormalize(message.data));
+        var angle = getAngleFromDirection(direction);
         if (new Date().getTime() - this.timer >= 10/this.nparticles) {
             this.timer = new Date().getTime();
-            this.messageDispatcher.sendMessage(new Message('create-particle', { position: position, 
-                    angle: this.rotation-Math.PI, 
+            this.messageDispatcher.sendMessage(new Message('create-particle', { position: this.position, 
+                    angle: angle, 
                     speed: vectorLength(this.velocity)+100, 
                     size: Math.random()*5, 
-                    ownerVelocity: this.velocity,
+                    ownerVelocity: {x:0, y:0},
                     lifetime: 0.5, 
                     randomizeAngle: Math.PI/4}));
         }
@@ -405,9 +411,9 @@ function ContinuousRotationComponent(config, messageDispatcher) {
 ContinuousRotationComponent.prototype = new Component();
 ContinuousRotationComponent.prototype.update = function(frameTime) {
 	if (this.direction > 0)
-		this.sendMessage(new Message('control', { button: 'right' }, this));	
+		this.sendMessage(new Message('rotate-right', { button: 'right' }, this));	
 	else
-		this.sendMessage(new Message('control', { button: 'left' }, this));	
+		this.sendMessage(new Message('rotate-left', { button: 'left' }, this));	
 }
 
 function GunComponent(config, messageDispatcher) {
@@ -439,6 +445,9 @@ GunComponent.prototype.receiveMessage = function(message) {
 }
 
 GunComponent.prototype.setWeaponLevel = function(level) {
+    if (level >= this.levels.length)
+        level = this.levels.length-1;
+
 	this.cooldown = this.levels[level].cooldown;
 	this.spread = this.levels[level].spread;
     this.barrels = this.levels[level].barrels;

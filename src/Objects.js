@@ -72,7 +72,12 @@ var ship =
                 },
                 {
                     cooldown: 0.075,
-                    spread: 0.1,
+                    spread: 0.15,
+                    barrels: 2
+                },
+                {
+                    cooldown: 0.05,
+                    spread: 0.15,
                     barrels: 2
                 }
             ],
