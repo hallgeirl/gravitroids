@@ -1,0 +1,22 @@
+﻿[
+	{
+		"type": "sprite",
+		"path": "ship.json",
+		"name": "ship"
+	},
+	{
+		"type": "sprite",
+		"path": "asteroids.json",
+		"name": "asteroids"
+	},
+	{
+		"type": "sprite",
+		"path": "bullet.json",
+		"name": "bullet"
+	},
+	{
+		"type": "sprite",
+		"path": "particle.json",
+		"name": "particle"
+	}
+]

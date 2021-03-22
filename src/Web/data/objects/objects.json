@@ -1,0 +1,42 @@
+﻿[
+	{
+		"type": "object",
+		"path": "ship.json",
+		"name": "ship"
+	},
+	{
+		"type": "object",
+		"path": "bullet.json",
+		"name": "bullet"
+	},
+	{
+		"type": "object",
+		"path": "asteroid_small.json",
+		"name": "asteroid_small"
+	},
+	{
+		"type": "object",
+		"path": "asteroid_medium.json",
+		"name": "asteroid_medium"
+	},
+		{
+		"type": "object",
+		"path": "asteroid_large.json",
+		"name": "asteroid_large"
+	},
+	{
+		"type": "object",
+		"path": "exhaust-particle.json",
+		"name": "exhaust-particle"
+	},
+	{
+		"type": "object",
+		"path": "ricochet-particle.json",
+		"name": "ricochet-particle"
+	},
+	{
+		"type": "object",
+		"path": "star.json",
+		"name": "star"
+	}
+]

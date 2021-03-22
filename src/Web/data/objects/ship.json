@@ -1,0 +1,88 @@
+﻿{ 
+	"components": [
+		{
+			"type": "sprite",
+			"sprite": "ship",
+			"scale": 0.15
+		},
+		{
+			"type": "spatial"
+		},
+		{
+			"type": "controller"
+		},
+		{
+			"type": "accellerator",
+			"magnitude": 200
+		},
+		{
+			"type": "gravity",
+			"magnitude": 98.8
+		},
+		{
+			"type": "exhaust",
+			"pipes": 5
+		},
+		{
+			"type": "rotation",
+			"initial": -1.57079632679489661923,
+			"speed": 0.05
+		},
+		{
+			"type": "gun",
+			"levels": [
+				{
+					"cooldown": 0.1,
+					"spread": 0.1,
+					"barrels": 1
+				},
+				{
+					"cooldown": 0.075,
+					"spread": 0.1,
+					"barrels": 1
+				},
+				{
+					"cooldown": 0.05,
+					"spread": 0.05,
+					"barrels": 1
+				},
+				{
+					"cooldown": 0.1,
+					"spread": 0.15,
+					"barrels": 2
+				},
+				{
+					"cooldown": 0.075,
+					"spread": 0.15,
+					"barrels": 2
+				},
+				{
+					"cooldown": 0.05,
+					"spread": 0.15,
+					"barrels": 2
+				}
+			],
+			"sound": "gun"
+		},
+		{
+			"type": "collision",
+			"radius": 25
+		},
+		{
+			"type": "explodeonkill",
+			"particlesize": 2,
+			"particlecount": 100,
+			"size": 5,
+			"sound": "explode3"
+		},
+		{
+			"type": "dieonasteroidcollision"
+		},
+		{
+			"type": "destroyoutofbounds"
+		},
+		{
+			"type": "weaponlevel"
+		}
+	]
+}

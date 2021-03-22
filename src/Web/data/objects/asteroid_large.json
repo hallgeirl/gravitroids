@@ -1,0 +1,46 @@
+﻿{
+    "components": [
+		{
+			"type": "sprite",
+			"sprite": "asteroids"
+		},
+        {
+            "type": "spatial"
+        },
+        {
+            "type": "gravity",
+            "magnitude": 98.8
+        },
+        {
+            "type": "rotation",
+            "initial": 1.57079632679489661923,
+            "speed": "$Math.random()*0.05"
+        },
+        {
+            "type": "asteroidsize",
+            "size": 3
+        },
+        {
+            "type": "continuousrotation",
+            "direction": "$Math.random()-0.5"
+        },
+        {
+            "type": "collision",
+			"radius": 64
+        },
+        {
+            "type": "explodeonkill",
+            "particlesize": 1,
+            "particlecount": 5,
+            "size": 0.5,
+            "sound": "explode"
+        },
+        {
+            "type": "destroyoutofbounds"
+        },
+        {
+            "type": "points",
+            "points": 400
+        }
+    ]
+}

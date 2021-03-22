@@ -1,0 +1,18 @@
+﻿[
+	{
+		"type": "resources",
+		"path": "objects/objects.json"
+	},
+	{
+		"type": "resources",
+		"path": "sound/sounds.json"
+	},
+	{
+		"type": "resources",
+		"path": "textures/textures.json"
+	},
+	{
+		"type": "resources",
+		"path": "sprites/sprites.json"
+	}
+]

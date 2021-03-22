@@ -5,45 +5,53 @@
 		<title>Gravistroids</title>
         <style id="container_size">
             #container {
-                width: 100px; 
-                height:100px;
-            }
+                display: block;
+                }
         </style>
         <style>
             body {
                 margin: 0; 
                 padding: 0;
-                background: gray;
             }
             #container {
-                background: white;
+                background: gray;
+            }
+
+            canvas {
+                display:block;
             }
         </style>
-		<script src="jquery-1.9.1.min.js" language="javascript"></script>
-		<script src="kinetic-v4.3.3.min.js" language="javascript"></script>
-		<script src="AudioSystem.js" language="javascript"></script>
-		<script src="MessageDispatcher.js" language="javascript"></script>
-		<script src="Shapes.js" language="javascript"></script>
-		<script src="Renderer.js" language="javascript"></script>
-		<script src="Stage.js" language="javascript"></script>
-		<script src="Game.js" language="javascript"></script>
-		<script src="GameObject.js" language="javascript"></script>
-		<script src="CollisionManager.js" language="javascript"></script>
-		<script src="Objects.js" language="javascript"></script>
-		<script src="Util.js" language="javascript"></script>
-		<script src="Components.js" language="javascript"></script>
-		<script src="ObjectFactory.js" language="javascript"></script>
-		<script language="javascript">
-		window.onload = function() {
-            var aspectRatio = screen.width/screen.height;
-			var game = new Game('container', 500, aspectRatio, 1);
-            game.start();
-			window.game = game;
-		}
-		</script>
+        <script data-main="lib/main" src="lib/require.js"></script>
+        <script id="shader-fs" type="x-shader/x-fragment">
+            precision mediump float;
+
+            varying highp vec2 vTextureCoord;
+            uniform sampler2D uSampler;
+            uniform vec4 uColor;
+
+            void main(void) {
+                vec4 finalColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+                gl_FragColor = finalColor * uColor;
+            }
+        </script>
+
+        <script id="shader-vs" type="x-shader/x-vertex">
+            attribute vec3 aVertexPosition;
+            attribute vec2 aTextureCoord;
+
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+
+            varying highp vec2 vTextureCoord;
+
+            void main(void) {
+                gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+                vTextureCoord = aTextureCoord;
+            }
+        </script>
+
 	</head>
 	<body>
-		<div id="container">
-		</div>
+		<div id="container"></div>
 	</body>
 </html>

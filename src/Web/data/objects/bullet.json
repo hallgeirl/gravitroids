@@ -1,0 +1,33 @@
+﻿{
+    "components": [
+		{
+			"type": "sprite",
+			"sprite": "bullet"
+		},
+        {
+            "type": "spatial"
+        },
+        {
+            "type": "rotation",
+            "initial": 0,
+            "speed": 0
+        },
+        {
+            "type": "collision",
+			"radius": 16
+        },
+        {
+            "type": "explodeonkill",
+            "particlesize": 0.1,
+            "particlecount": 5,
+            "size": 1,
+            "sound": "explode2"
+        },
+        {
+            "type": "dieonasteroidcollision"
+        },
+        {
+            "type": "destroyoutofbounds"
+        }
+    ]
+}
