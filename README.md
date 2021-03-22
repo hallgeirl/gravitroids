@@ -3,7 +3,7 @@ gravitroids
 
 A simple HTML5/javascript "clone" of Asteroids, but with gravity. 
 
-To test this out, you can visit: https://hallgeirl.github.io/gravitroids/src/Web/.
+To test this out, you can visit: [https://hallgeirl.github.io/gravitroids/src/Web/](https://hallgeirl.github.io/gravitroids/src/Web/).
 
 Controls:
 Up: Accellerate
