@@ -1,0 +1,22 @@
+﻿[
+	{
+		"type": "texture",
+		"path": "destroyer.png",
+		"name": "ship"
+	},
+	{
+		"type": "texture",
+		"path": "asteroids.png",
+		"name": "asteroids"
+	},
+	{
+		"type": "texture",
+		"path": "bullet.png",
+		"name": "bullet"
+	},
+	{
+		"type": "texture",
+		"path": "particle.png",
+		"name": "particle"
+	}
+]

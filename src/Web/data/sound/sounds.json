@@ -1,0 +1,22 @@
+﻿[
+	{
+		"type": "audio",
+		"path": "gun.ogg",
+		"name": "gun"
+	},
+	{
+		"type": "audio",
+		"path": "explode.ogg",
+		"name": "explode"
+	},
+	{
+		"type": "audio",
+		"path": "explode2.ogg",
+		"name": "explode2"
+	},
+	{
+		"type": "audio",
+		"path": "explode3.ogg",
+		"name": "explode3"
+	}
+]

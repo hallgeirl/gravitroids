@@ -1,0 +1,23 @@
+{
+  "texture": "ship",
+
+  "defaults": {
+    "frame-width": 346,
+    "frame-height": 476,
+    "animation": "stand"
+  },
+  
+  "animations": [
+    {
+      "name": "stand",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "delay": 1,
+          "next": 0
+        }
+      ]
+	}
+  ]
+}

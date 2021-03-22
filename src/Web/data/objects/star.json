@@ -1,0 +1,16 @@
+﻿{
+    "components": [
+		{
+			"type": "sprite",
+			"sprite": "particle",
+			"scale": 0.03,
+			"layer": -10
+		},
+        {
+            "type": "spatial"
+        },
+        {
+            "type": "destroyoutofbounds"
+        }
+    ]
+}

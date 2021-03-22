@@ -1,0 +1,19 @@
+﻿{
+	"modules": 
+	{
+		"components":
+		[
+			"component/AsteroidSizeComponent",
+			"component/ContinuousRotationComponent",
+			"component/DestroyOutOfBoundsComponent",
+			"component/DieOnAsteroidCollisionComponent",
+			"component/DieOnCollisionComponent",
+			"component/ExhaustComponent",
+			"component/ExplodeOnKillComponent",
+			"component/GunComponent",
+			"component/PointsComponent",
+			"component/WeaponLevelComponent",
+			"component/ParticleColorComponent"
+		]
+	}
+}

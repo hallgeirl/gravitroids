@@ -1,0 +1,23 @@
+{
+  "texture": "particle",
+
+  "defaults": {
+    "frame-width": 128,
+    "frame-height": 128,
+    "animation": "default"
+  },
+  
+  "animations": [
+    {
+      "name": "default",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "delay": 1,
+          "next": 0
+        }
+      ]
+	}
+  ]
+}

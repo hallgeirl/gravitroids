@@ -1,0 +1,23 @@
+{
+  "texture": "asteroids",
+
+  "defaults": {
+    "frame-width": 128,
+    "frame-height": 128,
+    "animation": "asteroid1"
+  },
+  
+  "animations": [
+    {
+      "name": "stand",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "delay": 1,
+          "next": 0
+        }
+      ]
+	}
+  ]
+}

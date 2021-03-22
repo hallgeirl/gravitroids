@@ -1,0 +1,20 @@
+﻿{
+    "components": [
+		{
+			"type": "sprite",
+			"sprite": "particle"
+		},
+        {
+            "type": "spatial"
+        },
+        {
+            "type": "lifetime",
+            "lifetime": 1
+        },
+		{
+            "type": "particlecolor",
+            "initialColor": [1,0.5,0,1],
+			"targetColor": [0,0,0,0]
+        }
+    ]
+}
